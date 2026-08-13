@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HoneyShield Settings</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <aside class="sidebar">
+
+        <h2>🛡 HoneyShield</h2>
+
+        <ul>
+
+            <li onclick="window.location.href='dashboard.html'">🏠 Dashboard</li>
+            <li>🍯 Honeypot</li>
+            <li>📜 Attack Logs</li>
+            <li>📊 Analytics</li>
+            <li class="active">⚙ Settings</li>
+            <li onclick="logout()">🚪 Logout</li>
+
+        </ul>
+
+    </aside>
+
+    <main class="main-content">
+
+        <h1>Admin Configuration Panel</h1>
+
+        <div class="alert-box" id="statusBox">
+            Adjust the brute-force detection sensitivity below.
+        </div>
+
+        <div class="status-card" style="max-width:480px; margin-top:20px;">
+
+            <h3>Detection Thresholds</h3>
+
+            <form id="configForm" style="display:flex; flex-direction:column; gap:16px; margin-top:16px;">
+
+                <label>
+                    Failed attempts before redirecting to decoy
+                    <input type="number" id="thresholdAttempts" min="1" max="20" required
+                        style="width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #333; background:#0b1120; color:#fff;">
+                </label>
+
+                <label>
+                    Time window (seconds)
+                    <input type="number" id="timeWindowSeconds" min="5" max="3600" required
+                        style="width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #333; background:#0b1120; color:#fff;">
+                </label>
+
+                <button type="submit">💾 Save Configuration</button>
+
+            </form>
+
+            <p id="saveMessage" style="margin-top:12px;"></p>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+async function loadConfig() {
+
+    const response = await fetch("/api/config");
+
+    if (response.status === 401) {
+        window.location.href = "/";
+        return;
+    }
+
+    const data = await response.json();
+
+    document.getElementById("thresholdAttempts").value = data.config.thresholdAttempts;
+    document.getElementById("timeWindowSeconds").value = data.config.timeWindowSeconds;
+
+}
+
+document.getElementById("configForm").addEventListener("submit", async function (e) {
+
+    e.preventDefault();
+
+    const thresholdAttempts = Number(document.getElementById("thresholdAttempts").value);
+    const timeWindowSeconds = Number(document.getElementById("timeWindowSeconds").value);
+
+    const response = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thresholdAttempts, timeWindowSeconds }),
+    });
+
+    const data = await response.json();
+    const msg = document.getElementById("saveMessage");
+
+    if (data.success) {
+        msg.style.color = "lime";
+        msg.innerHTML = "✅ Configuration saved successfully.";
+    } else {
+        msg.style.color = "red";
+        msg.innerHTML = "❌ " + data.error;
+    }
+
+});
+
+async function logout(){
+    try {
+        await fetch("/api/logout", { method: "POST" });
+    } catch (err) {
+        console.log(err);
+    }
+    window.location.href = "/";
+}
+
+loadConfig();
+
+</script>
+
+</body>
+</html>

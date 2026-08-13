@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HoneyShield - Threat Monitoring Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; padding: 20px; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px; }
+    h1 { color: #38bdf8; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+    
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .status-badge { background: #22c55e20; color: #4ade80; padding: 6px 12px; border-radius: 20px; border: 1px solid #22c55e50; font-size: 14px; }
+    
+    .sound-btn { background: #ef444420; color: #fca5a5; border: 1px solid #ef444450; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .sound-btn.active { background: #22c55e20; color: #4ade80; border-color: #22c55e50; }
+
+    .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 25px; }
+    @media (max-width: 900px) { .grid-container { grid-template-columns: 1fr; } }
+
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+    .card { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; }
+    .card h3 { color: #94a3b8; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+    .card .number { font-size: 32px; font-weight: bold; color: #f43f5e; }
+
+    .chart-card { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 260px; }
+    .chart-card h3 { color: #94a3b8; font-size: 14px; margin-bottom: 10px; text-align: left; width: 100%; }
+
+    .logs-container { background: #1e293b; border-radius: 10px; border: 1px solid #334155; padding: 20px; margin-bottom: 20px; }
+    .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    
+    .btn-group { display: flex; gap: 10px; }
+    .btn { border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: #38bdf8; color: #0f172a; }
+    .btn-danger { background: #ef4444; color: white; }
+
+    /* TABLE CLEAN FORMATTING & SPACING */
+    table { width: 100%; border-collapse: separate; border-spacing: 0 8px; text-align: left; }
+    th { color: #94a3b8; font-weight: 600; padding: 12px 16px; font-size: 13px; border-bottom: 2px solid #334155; }
+    
+    td { padding: 14px 16px; font-size: 13px; background: #0f172a80; vertical-align: middle; }
+    
+    /* Rounded edges and bottom border space for each log row */
+    tr.log-row td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-left: 4px solid #38bdf8; }
+    tr.log-row td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    tr.log-row.blocked td:first-child { border-left-color: #ef4444; }
+
+    .input-tag { 
+      background: #1e293b; 
+      color: #38bdf8; 
+      padding: 6px 10px; 
+      border-radius: 6px; 
+      font-size: 12px; 
+      font-family: 'Courier New', Courier, monospace; 
+      border: 1px solid #334155; 
+      display: inline-block; 
+      word-break: break-all;
+      max-width: 100%;
+    }
+    
+    .sev-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold; color: white; display: inline-block; margin-top: 4px; }
+    .sev-critical { background-color: #ef4444; }
+    .sev-high { background-color: #f97316; }
+    .sev-medium { background-color: #eab308; color: #0f172a; }
+    .sev-low { background-color: #3b82f6; }
+
+    .blocked-box { background: #450a0a; border: 1px solid #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .blocked-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+    .ip-chip { background: #7f1d1d; color: #fca5a5; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-family: monospace; border: 1px solid #f87171; display: flex; align-items: center; gap: 8px; }
+    .ip-chip button { background: none; border: none; color: #fca5a5; cursor: pointer; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🛡️ HoneyShield Advanced Console</h1>
+    <div class="header-right">
+      <button id="soundToggle" class="sound-btn">🔇 ENABLE SOUND ALERT</button>
+      <span class="status-badge">● Deception Shield Active</span>
+    </div>
+  </header>
+
+  <div class="grid-container">
+    <div class="stats-container">
+      <div class="card">
+        <h3>SUBMITTED ATTACKS</h3>
+        <div class="number" id="totalAttacks">0</div>
+      </div>
+      <div class="card">
+        <h3>BLOCKED IP COUNT</h3>
+        <div style="color: #ef4444; font-size: 32px; font-weight: bold;" id="blockedCount">0</div>
+      </div>
+      <div class="card" style="grid-column: span 2;">
+        <h3>AUTO-BLOCK POLICY</h3>
+        <div style="color: #38bdf8; font-size: 14px; font-weight: bold; margin-top: 8px;">Max Threshold: 2 Attacks 🛑 -> Permanent IP Blacklist</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>ATTACK DISTRIBUTION</h3>
+      <div style="position: relative; height: 180px; width: 100%;">
+        <canvas id="attackChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blocked IPs Section -->
+  <div class="blocked-box">
+    <div>
+      <h3 style="color: #fca5a5; font-size: 14px;">⛔ ACTIVELY BLACKLISTED IPs</h3>
+      <div class="blocked-list" id="blockedIpList">
+        <span style="color: #991b1b; font-size: 12px;">No IPs currently blacklisted.</span>
+      </div>
+    </div>
+    <button id="resetAllBtn" class="btn btn-danger">🔓 Reset All Blocked IPs</button>
+  </div>
+
+  <div class="logs-container">
+    <div class="logs-header">
+      <h2>Captured Attack & Honeytoken Logs</h2>
+      <div class="btn-group">
+        <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time / Session</th>
+          <th>Real IP</th>
+          <th>Spoofed IP Sent</th>
+          <th>Target Route</th>
+          <th>Captured Details / Payload</th>
+        </tr>
+      </thead>
+      <tbody id="logsTable">
+        <tr>
+          <td colspan="5" style="text-align: center; color: #64748b;">No attacks or honeytoken interactions recorded yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let attackChart = null;
+    let currentLogs = [];
+    let previousCount = null;
+    let audioContext = null;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+
+      audioUnlocked = true;
+      const soundBtn = document.getElementById('soundToggle');
+      soundBtn.innerText = '🔊 AUDIO ALERTS ACTIVE';
+      soundBtn.classList.add('active');
+
+      playBeep();
+    }
+
+    function playBeep() {
+      if (!audioUnlocked || !audioContext) return;
+
+      try {
+        if (audioContext.state === 'suspended') audioContext.resume();
+
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(850, audioContext.currentTime);
+
+        gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.4);
+      } catch (e) {
+        console.error("Audio error:", e);
+      }
+    }
+
+    function initChart(routeData) {
+      const ctx = document.getElementById('attackChart').getContext('2d');
+      const labels = Object.keys(routeData);
+      const counts = Object.values(routeData);
+
+      if (attackChart) attackChart.destroy();
+
+      attackChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels.length ? labels : ['No Attacks'],
+          datasets: [{
+            data: counts.length ? counts : [1],
+            backgroundColor: labels.length ? ['#f43f5e', '#38bdf8', '#a855f7', '#eab308', '#22c55e'] : ['#334155'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } } }
+        }
+      });
+    }
+
+    async function unblockIp(ip) {
+      await fetch('/api/reset-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip: ip })
+      });
+      fetchLogs();
+    }
+
+    async function resetAllIps() {
+      await fetch('/api/reset-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      fetchLogs();
+    }
+
+    // Dynamic Formatter for handling both old array-keystrokes and new capturedInputs strings
+    function formatCapturedInputs(log) {
+      if (log.capturedInputs) {
+        return log.capturedInputs;
+      }
+      
+      if (log.keystrokes && Array.isArray(log.keystrokes) && log.keystrokes.length > 0) {
+        const lastEntry = log.keystrokes[log.keystrokes.length - 1];
+        return `Keystrokes: ${lastEntry.field || 'Input'} -> "${lastEntry.keyCaptured || ''}"`;
+      }
+
+      return 'Direct Route Access / No Input Data';
+    }
+
+    async function fetchLogs() {
+      try {
+        const response = await fetch('/api/logs');
+        const data = await response.json();
+
+        currentLogs = data.logs || [];
+        const blockedIPs = data.blockedIPs || [];
+        const newTotal = data.totalAttacks !== undefined ? data.totalAttacks : currentLogs.length;
+
+        // Trigger Beep Sound when a new attack appears
+        if (previousCount !== null && newTotal > previousCount) {
+          playBeep();
+        }
+
+        previousCount = newTotal;
+        document.getElementById('totalAttacks').innerText = newTotal;
+        document.getElementById('blockedCount').innerText = blockedIPs.length;
+
+        const blockedContainer = document.getElementById('blockedIpList');
+        if (blockedIPs.length === 0) {
+          blockedContainer.innerHTML = `<span style="color: #991b1b; font-size: 12px;">No IPs currently blacklisted.</span>`;
+        } else {
+          blockedContainer.innerHTML = blockedIPs.map(ip => `
+            <div class="ip-chip">
+              <span>${ip}</span>
+              <button onclick="unblockIp('${ip}')" title="Unblock IP">✖</button>
+            </div>
+          `).join('');
+        }
+
+        const routeCounts = {};
+        currentLogs.forEach(log => {
+          if (log.path) routeCounts[log.path] = (routeCounts[log.path] || 0) + 1;
+        });
+
+        initChart(routeCounts);
+
+        const tableBody = document.getElementById('logsTable');
+        
+        if (currentLogs.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">No attacks or honeytoken interactions recorded yet.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = currentLogs.map(log => {
+          const severity = log.severity || 'LOW';
+          const sevClass = severity === 'CRITICAL' ? 'sev-critical' : (severity === 'HIGH' ? 'sev-high' : (severity === 'MEDIUM' ? 'sev-medium' : 'sev-low'));
+          const detailsText = formatCapturedInputs(log);
+          const isBlocked = log.isBlocked || false;
+
+          return `
+            <tr class="log-row ${isBlocked ? 'blocked' : ''}">
+              <td>
+                <div style="font-weight:bold; color:#f8fafc;">${log.timestamp || 'N/A'}</div>
+                <div style="font-size:10px; color:#64748b; margin-top:2px;">${log.sessionId || 'N/A'}</div>
+              </td>
+              <td style="color: #fb7185; font-weight: bold;">
+                ${log.ip || 'Unknown'}
+                ${isBlocked ? '<span style="color:#ef4444; font-size:10px; display:block; margin-top:2px;">[IP BLOCKED]</span>' : ''}
+              </td>
+              <td style="color: #38bdf8; font-weight: bold;">${log.spoofedResponseIP || '10.0.0.1'}</td>
+              <td><code style="background:#1e293b; padding:4px 8px; border-radius:4px; color:#a855f7;">${log.path || '/'}</code></td>
+              <td>
+                <div class="input-tag">${detailsText}</div>
+                <div><span class="sev-badge ${sevClass}">${severity}</span></div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error fetching logs:', err);
+      }
+    }
+
+    document.getElementById('soundToggle').addEventListener('click', unlockAudio);
+    document.getElementById('refreshBtn').addEventListener('click', fetchLogs);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAllIps);
+
+    fetchLogs();
+    setInterval(fetchLogs, 2000);
+  </script>
+</body>
+</html>

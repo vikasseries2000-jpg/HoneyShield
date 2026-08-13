@@ -1,0 +1,4 @@
+{
+  "thresholdAttempts": 3,
+  "timeWindowSeconds": 60
+}

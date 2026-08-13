@@ -1,0 +1,173 @@
+[
+  {
+    "timestamp": "2026-08-04T21:18:35.872Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.63.100.177",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:18:42.357Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.63.249.163",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:18:43.997Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.54.46.75",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:18:45.548Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.87.154.251",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:18:46.697Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.171.10.146",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:18:47.538Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.93.145.33",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:28:05.450Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.116.211.32",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:28:06.656Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.139.150.211",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 80,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:31:22.082Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.111.47.228",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:52:36.274Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.139.7.139",
+    "attackType": "PASSIVE_CHECK",
+    "accumulatedRiskScore": 0,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:52:36.282Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.191.77.140",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:06.508Z",
+    "realIP": "::ffff:127.0.0.1",
+    "spoofedFakeIP": "10.37.64.43",
+    "attackType": "PASSIVE_CHECK",
+    "accumulatedRiskScore": 0,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:06.510Z",
+    "realIP": "::ffff:127.0.0.1",
+    "spoofedFakeIP": "10.17.39.212",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:38.906Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.89.122.96",
+    "attackType": "PASSIVE_CHECK",
+    "accumulatedRiskScore": 0,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:38.908Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.96.53.232",
+    "attackType": "XSS_ATTACK_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:57.149Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.35.126.133",
+    "attackType": "PASSIVE_CHECK",
+    "accumulatedRiskScore": 0,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:53:57.151Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.29.27.200",
+    "attackType": "XSS_ATTACK_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:54:18.557Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.120.60.119",
+    "attackType": "PASSIVE_CHECK",
+    "accumulatedRiskScore": 0,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  {
+    "timestamp": "2026-08-04T21:54:18.560Z",
+    "realIP": "::1",
+    "spoofedFakeIP": "10.201.69.54",
+    "attackType": "SQL_INJECTION_ATTEMPT",
+    "accumulatedRiskScore": 40,
+    "status": "DECEPTION_ACTIVE",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  }
+]

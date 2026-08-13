@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Core - Restricted Admin Console</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: monospace; }
+        .admin-card { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+        .text-emerald { color: #2ea043; }
+        .text-danger-custom { color: #f85149; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <!-- Deception Banner -->
+        <div class="alert alert-warning border-warning bg-dark text-warning d-flex align-items-center mb-4" role="alert">
+            <div>
+                ⚠️ <b>SESSION WARNING:</b> High-privilege access granted under Emergency Proxy Node. All actions are logged.
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+            <div>
+                <h3 class="fw-bold text-emerald mb-0">🔑 ENTERPRISE SYSTEM COMMAND CENTER</h3>
+                <small class="text-muted">Node Session Active | Granted Privileges: SYS_ADMIN_ROOT</small>
+            </div>
+            <a href="/honeypot.html" class="btn btn-sm btn-outline-danger">Terminate Session</a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="admin-card p-3">
+                    <h6 class="text-muted">DATABASE NODE STATUS</h6>
+                    <h4 class="text-emerald mt-2">ONLINE (Primary)</h4>
+                    <small class="text-secondary">Host: 10.142.88.1</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="admin-card p-3">
+                    <h6 class="text-muted">CONNECTED USERS</h6>
+                    <h4 class="text-warning mt-2">1 ACTIVE SESSION</h4>
+                    <small class="text-secondary">Your IP: Classified</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="admin-card p-3">
+                    <h6 class="text-muted">SYSTEM INTEGRITY</h6>
+                    <h4 class="text-emerald mt-2">SECURE</h4>
+                    <small class="text-secondary">Encryption: AES-256</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fake Data Table (Bait for Attacker) -->
+        <div class="admin-card p-4 mt-4">
+            <h5 class="text-emerald mb-3">📁 Confidential User Database Records (Top 5)</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th># ID</th>
+                            <th>USER HASH</th>
+                            <th>ROLE</th>
+                            <th>LAST ACCESS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1001</td>
+                            <td>sysadmin_root</td>
+                            <td><span class="badge bg-danger">SUPER_ADMIN</span></td>
+                            <td>Just now</td>
+                        </tr>
+                        <tr>
+                            <td>1002</td>
+                            <td>corp_finance_lead</td>
+                            <td><span class="badge bg-primary">FINANCE</span></td>
+                            <td>2 mins ago</td>
+                        </tr>
+                        <tr>
+                            <td>1003</td>
+                            <td>dev_ops_master</td>
+                            <td><span class="badge bg-info">DEVOPS</span></td>
+                            <td>14 mins ago</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

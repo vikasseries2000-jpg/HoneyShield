@@ -1,0 +1,318 @@
+[
+  {
+    "id": "INC-1785366192486",
+    "timestamp": "2026-07-29T23:03:12.486Z",
+    "ip": "::1",
+    "fingerprint": "FP-39879D0E",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Cross-Site Scripting (XSS)",
+    "severity": "HIGH",
+    "riskScore": "0%",
+    "canaryTriggered": false,
+    "endpoint": "/honeypot/login",
+    "payload": {
+      "username": "<script>alert('HoneyShield_Hacked')</script>",
+      "password": "zeahggh"
+    },
+    "status": "MONITORED",
+    "triggerClownRedirection": true
+  },
+  {
+    "id": "INC-1785366091068",
+    "timestamp": "2026-07-29T23:01:31.070Z",
+    "ip": "::1",
+    "fingerprint": "FP-39879D0E",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "riskScore": "40%",
+    "canaryTriggered": false,
+    "endpoint": "/honeypot/login",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "rstra"
+    },
+    "status": "MONITORED",
+    "triggerClownRedirection": true
+  },
+  {
+    "id": "INC-1785364359150",
+    "timestamp": "2026-07-29T22:32:39.150Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "xq2q",
+      "attemptedAt": "2026-07-29T22:32:39.081Z"
+    }
+  },
+  {
+    "id": "INC-1785364346645",
+    "timestamp": "2026-07-29T22:32:26.645Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "gdskhii",
+      "attemptedAt": "2026-07-29T22:32:26.579Z"
+    }
+  },
+  {
+    "id": "INC-1785364331367",
+    "timestamp": "2026-07-29T22:32:11.367Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "gg",
+      "attemptedAt": "2026-07-29T22:32:11.344Z"
+    }
+  },
+  {
+    "id": "INC-1785364318863",
+    "timestamp": "2026-07-29T22:31:58.864Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "xyxytxh",
+      "attemptedAt": "2026-07-29T22:31:58.829Z"
+    }
+  },
+  {
+    "id": "INC-1785363538154",
+    "timestamp": "2026-07-29T22:18:58.154Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "gffgf",
+      "attemptedAt": "2026-07-29T22:18:58.149Z"
+    }
+  },
+  {
+    "id": "INC-1785363529392",
+    "timestamp": "2026-07-29T22:18:49.450Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "gdfdf",
+      "attemptedAt": "2026-07-29T22:18:49.382Z"
+    }
+  },
+  {
+    "id": "INC-1785363521494",
+    "timestamp": "2026-07-29T22:18:41.497Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "sdsds",
+      "attemptedAt": "2026-07-29T22:18:41.452Z"
+    }
+  },
+  {
+    "id": "INC-1785363017911",
+    "timestamp": "2026-07-29T22:10:17.911Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "iuy7y",
+      "attemptedAt": "2026-07-29T22:10:17.905Z"
+    }
+  },
+  {
+    "id": "INC-1785363010008",
+    "timestamp": "2026-07-29T22:10:10.045Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "oiuih",
+      "attemptedAt": "2026-07-29T22:10:10.006Z"
+    }
+  },
+  {
+    "id": "INC-1785363001959",
+    "timestamp": "2026-07-29T22:10:01.959Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "iuhiu",
+      "attemptedAt": "2026-07-29T22:10:01.957Z"
+    }
+  },
+  {
+    "id": "INC-1785362994247",
+    "timestamp": "2026-07-29T22:09:54.250Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "iuuhjkh",
+      "attemptedAt": "2026-07-29T22:09:54.189Z"
+    }
+  },
+  {
+    "id": "INC-1785362698142",
+    "timestamp": "2026-07-29T22:04:58.144Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "xfgxxx",
+      "attemptedAt": "2026-07-29T22:04:58.088Z"
+    }
+  },
+  {
+    "id": "INC-1785362422550",
+    "timestamp": "2026-07-29T22:00:22.550Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "'1'='1",
+      "password": "hghgg",
+      "attemptedAt": "2026-07-29T22:00:22.544Z"
+    }
+  },
+  {
+    "id": "INC-1785362302411",
+    "timestamp": "2026-07-29T21:58:22.412Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "admin",
+      "password": "admin123",
+      "attemptedAt": "2026-07-29T21:58:22.395Z"
+    }
+  },
+  {
+    "id": "INC-1785362186246",
+    "timestamp": "2026-07-29T21:56:26.251Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "mai  kya laddlee ghoppgh",
+      "password": "khkfdjahd",
+      "attemptedAt": "2026-07-29T21:56:26.160Z"
+    }
+  },
+  {
+    "id": "INC-1785361162224",
+    "timestamp": "2026-07-29T21:39:22.224Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "or 1+1=",
+      "password": "d ",
+      "attemptedAt": "2026-07-29T21:39:22.220Z"
+    }
+  },
+  {
+    "id": "INC-1785361122488",
+    "timestamp": "2026-07-29T21:38:42.488Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "f2fu2h iy ey gxiu",
+      "password": "whx vuxd2",
+      "attemptedAt": "2026-07-29T21:38:42.482Z"
+    }
+  },
+  {
+    "id": "INC-1785361094565",
+    "timestamp": "2026-07-29T21:38:14.569Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "vhjvajh",
+      "password": "w  h",
+      "attemptedAt": "2026-07-29T21:38:14.515Z"
+    }
+  },
+  {
+    "id": "INC-1785358406610",
+    "timestamp": "2026-07-29T20:53:26.610Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "SQL Injection (SQLi)",
+    "severity": "CRITICAL",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "' OR '1'='1",
+      "password": "anything123",
+      "attemptedAt": "2026-07-29T20:53:26.415Z"
+    }
+  },
+  {
+    "id": "INC-1785358358843",
+    "timestamp": "2026-07-29T20:52:38.849Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "attackType": "Honeypot Trap Triggered",
+    "severity": "MEDIUM",
+    "endpoint": "/honeypot.html",
+    "payload": {
+      "username": "admin",
+      "password": "admin123",
+      "attemptedAt": "2026-07-29T20:52:38.627Z"
+    }
+  }
+]

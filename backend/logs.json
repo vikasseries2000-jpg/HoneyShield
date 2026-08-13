@@ -1,0 +1,859 @@
+[
+  {
+    "id": 1786648948685,
+    "sessionId": "SESS-9NUVE96CN",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.188",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: admin | Pass: adminpassword",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:52:28 AM",
+    "date": "8/14/2026"
+  },
+  {
+    "id": 1786648320621,
+    "sessionId": "SESS-R9VJTH10N",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.196",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: Admin | Pass: Adminpassword ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:42:00 AM",
+    "date": "8/14/2026"
+  },
+  {
+    "id": 1786648268024,
+    "sessionId": "SESS-UI1PJFPXL",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.39",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: admin | Pass: adminpassword",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:41:08 AM",
+    "date": "8/14/2026"
+  },
+  {
+    "id": 1786561170784,
+    "sessionId": "SESS-41WKTBI3O",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.168",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: admin | Pass: adminpassword",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:29:30 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786561061402,
+    "sessionId": "SESS-HQP88CWQG",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.62",
+    "path": "📜 Honeytoken Recon (.env)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:27:41 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786561059486,
+    "sessionId": "SESS-7IOHRQHRZ",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.136",
+    "path": "📜 Honeytoken Recon (.env)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED",
+    "severity": "HIGH",
+    "isBlocked": false,
+    "timestamp": "12:27:39 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786561014919,
+    "sessionId": "SESS-XNSFDX1OQ",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.8",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: admin | Pass: admin123 ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:26:54 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786560996073,
+    "sessionId": "SESS-IJ4WNL02M",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.142",
+    "path": "📜 Honeytoken Recon (.env)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED",
+    "severity": "HIGH",
+    "isBlocked": false,
+    "timestamp": "12:26:36 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786560943895,
+    "sessionId": "SESS-VX4LX65C0",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.88",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: username | Pass: userpass123 ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:25:43 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786560884449,
+    "sessionId": "SESS-2MXYDO3TD",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.207",
+    "path": "🔑 Credential Bruteforce",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: hii | Pass: vikas",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:24:44 AM",
+    "date": "8/13/2026"
+  },
+  {
+    "id": 1786304019112,
+    "sessionId": "SESS-6CM4G3LYD",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.33",
+    "path": "💉 SQL Injection (SQLi)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: '   OR '1'='1 | Pass: 123 ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "1:03:39 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786303980101,
+    "sessionId": "SESS-H9N1EAM6H",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.71",
+    "path": "📜 Honeytoken Recon (.env)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED",
+    "severity": "HIGH",
+    "isBlocked": false,
+    "timestamp": "1:03:00 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786303652891,
+    "sessionId": "SESS-GSS51QWB3",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.206",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:57:32 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786303647824,
+    "sessionId": "SESS-0691JWYDB",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.142",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: jyhjh | Pass: hvh",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:57:27 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786303269013,
+    "sessionId": "SESS-P4INVX4EL",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.215",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: '   OR'1'='1 | Pass:  wdl  ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:51:09 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786303238905,
+    "sessionId": "SESS-VBOWS6P4A",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.211",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT",
+    "severity": "CRITICAL",
+    "isBlocked": false,
+    "timestamp": "12:50:38 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786301885308,
+    "sessionId": "SESS-0ET01I5M6",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.92",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "12:28:05 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786301872426,
+    "sessionId": "SESS-8MTV961OV",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.60",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: '  OR '1'='1 | Pass: vgvgf",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "12:27:52 AM",
+    "date": "8/10/2026"
+  },
+  {
+    "id": 1786225911955,
+    "sessionId": "SESS-TWGMNZ8I4",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.180",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT",
+    "severity": "CRITICAL",
+    "isBlocked": false,
+    "timestamp": "3:21:51 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225895804,
+    "sessionId": "SESS-49UG7D4NE",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.104",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "3:21:35 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225890472,
+    "sessionId": "SESS-Q2VXAX6MX",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.19",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED",
+    "severity": "HIGH",
+    "isBlocked": false,
+    "timestamp": "3:21:30 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225782972,
+    "sessionId": "SESS-MWJLXIL80",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.55",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "3:19:42 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225772000,
+    "sessionId": "SESS-Q8YGZI4ZT",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.12",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: xxtxx | Pass: 1123",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "3:19:32 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225606037,
+    "sessionId": "SESS-TRC5U90X5",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.61",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED ⛔ [IP AUTO-BLOCKED]",
+    "severity": "CRITICAL",
+    "isBlocked": true,
+    "timestamp": "3:16:46 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225599850,
+    "sessionId": "SESS-2B1HBJT6A",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.50",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: vxu | Pass: vwxu",
+    "severity": "MEDIUM",
+    "isBlocked": false,
+    "timestamp": "3:16:39 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786225120082,
+    "sessionId": "SESS-Y72KT8UI1",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.210",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: admin | Pass: supersecret13 [Issued Fake Token: ht_bearer_31nf7f1flw9]",
+    "severity": "MEDIUM",
+    "timestamp": "3:08:40 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224971568,
+    "sessionId": "SESS-RJ2P3H9S8",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.76",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT (AKIAIOSFOD...)",
+    "severity": "CRITICAL",
+    "timestamp": "3:06:11 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224966952,
+    "sessionId": "SESS-6QVFH26FX",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.125",
+    "path": "/api/v1/auth/aws-login",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "HONEYTOKEN EXPLOITATION ATTEMPT (AKIAIOSFOD...)",
+    "severity": "CRITICAL",
+    "timestamp": "3:06:06 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224784614,
+    "sessionId": "SESS-PDKLQ5KKQ",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.193",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "EXPOSED HONEYTOKENS DOWNLOADED",
+    "severity": "HIGH",
+    "timestamp": "3:03:04 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224313856,
+    "sessionId": "SESS-TP6D9GQJE",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.129",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: hii | Pass: 123",
+    "timestamp": "2:55:13 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224279300,
+    "sessionId": "SESS-DWBXDUIRM",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.140",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "Direct Sensitive File Access Request",
+    "timestamp": "2:54:39 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224273151,
+    "sessionId": "SESS-LPX0ZNXQZ",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.220",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "Direct Sensitive File Access Request",
+    "timestamp": "2:54:33 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786224002092,
+    "sessionId": "SESS-1SYIX7DUE",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.238",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: cykw1 | Pass: jwjz zq",
+    "timestamp": "2:50:02 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223984524,
+    "sessionId": "SESS-EP3T55JN8",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.182",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: cykw1 | Pass: jwjz zq",
+    "timestamp": "2:49:44 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223923966,
+    "sessionId": "SESS-XZ67GIQ0L",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.84",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: ,;,,;nih | Pass: dtydty",
+    "timestamp": "2:48:43 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223910134,
+    "sessionId": "SESS-7CJAU32WK",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.16",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: xzrr | Pass: hhh",
+    "timestamp": "2:48:30 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223882499,
+    "sessionId": "SESS-Y1D7R93EN",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.151",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: qhmsx12d | Pass: e1d",
+    "timestamp": "2:48:02 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223845074,
+    "sessionId": "SESS-JQ0UFXNGS",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.55",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: 2ih23;od | Pass: 91yd9o",
+    "timestamp": "2:47:25 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223774785,
+    "sessionId": "SESS-9VQW7ZDAY",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.34",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "capturedInputs": "User: xzrr | Pass: hhh",
+    "timestamp": "2:46:14 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223263121,
+    "sessionId": "SESS-ZEN5I3FVP",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.185",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:37:43 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223254701,
+    "sessionId": "SESS-B4JOHW0JP",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.147",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:37:34 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223252758,
+    "sessionId": "SESS-BP9D0TKL3",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.181",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:37:32 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223248023,
+    "sessionId": "SESS-W7N2BV65X",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.4",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:37:28 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223240662,
+    "sessionId": "SESS-08J4INEUI",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.42",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [
+      {
+        "field": "Username",
+        "keyCaptured": "vxh",
+        "time": "2:37:25 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "vxhsv",
+        "time": "2:37:25 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "vxhsv",
+        "time": "2:37:25 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "vxhsv",
+        "time": "2:37:25 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "vxhsv",
+        "time": "2:37:25 AM"
+      }
+    ],
+    "timestamp": "2:37:20 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786223053796,
+    "sessionId": "SESS-SK3QZKODQ",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.132",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [
+      {
+        "field": "Username",
+        "keyCaptured": "b",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab ",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab ",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab am",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab am",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "b ab am",
+        "time": "2:34:17 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "X",
+        "time": "2:34:19 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "XWE",
+        "time": "2:34:24 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "XWEF",
+        "time": "2:34:24 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "XWEF",
+        "time": "2:34:24 AM"
+      }
+    ],
+    "timestamp": "2:34:13 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786222930281,
+    "sessionId": "SESS-UNP4857YV",
+    "ip": "::1",
+    "spoofedResponseIP": "10.0.12.96",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:32:10 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786222899467,
+    "sessionId": "SESS-W9ZEVFE1F",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.169",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [
+      {
+        "field": "Username",
+        "keyCaptured": "g",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcg",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcgh",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcgh",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcghcg",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcghcgh",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "gcghcgh",
+        "time": "2:31:42 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "hg",
+        "time": "2:31:44 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "hg",
+        "time": "2:31:44 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "hghg",
+        "time": "2:31:45 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "hghg",
+        "time": "2:31:45 AM"
+      }
+    ],
+    "timestamp": "2:31:39 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786222261212,
+    "sessionId": "SESS-4L2G1DYDZ",
+    "ip": "::1",
+    "spoofedResponseIP": "192.168.99.118",
+    "path": "/wp-login.php",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [
+      {
+        "field": "Username",
+        "keyCaptured": "",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "f",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fd",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fdz",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fdz",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fdzg",
+        "time": "2:21:04 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fdzgf",
+        "time": "2:21:05 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "fdzgf",
+        "time": "2:21:05 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "v",
+        "time": "2:21:07 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "vvb",
+        "time": "2:21:07 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "vvb",
+        "time": "2:21:07 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "vvb",
+        "time": "2:21:08 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "vvb",
+        "time": "2:21:08 AM"
+      }
+    ],
+    "timestamp": "2:21:01 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786222250364,
+    "sessionId": "SESS-7A3YYPPY5",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.213",
+    "path": "/.env",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [],
+    "timestamp": "2:20:50 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786222158304,
+    "sessionId": "SESS-7UHS1KLUN",
+    "ip": "::1",
+    "spoofedResponseIP": "172.16.4.119",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "keystrokes": [
+      {
+        "field": "Username",
+        "keyCaptured": "a",
+        "time": "2:19:25 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "ad",
+        "time": "2:19:26 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "adm",
+        "time": "2:19:26 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "admi",
+        "time": "2:19:27 AM"
+      },
+      {
+        "field": "Username",
+        "keyCaptured": "admin",
+        "time": "2:19:27 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "1",
+        "time": "2:19:33 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "12",
+        "time": "2:19:34 AM"
+      },
+      {
+        "field": "Password",
+        "keyCaptured": "123",
+        "time": "2:19:34 AM"
+      }
+    ],
+    "timestamp": "2:19:18 AM",
+    "date": "8/9/2026"
+  },
+  {
+    "id": 1786221565652,
+    "ip": "::1",
+    "path": "/admin",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "timestamp": "2:09:25 AM",
+    "date": "8/9/2026"
+  }
+]
