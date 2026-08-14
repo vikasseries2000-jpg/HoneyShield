@@ -186,11 +186,6 @@ function renderHTML(title, pageType, data = {}) {
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            .btn-siren.active {
-                background: rgba(16, 185, 129, 0.2);
-                border-color: var(--accent-green);
-                color: var(--accent-green);
-            }
 
             .btn-logout { color: var(--accent-red); text-decoration: none; font-weight: 600; }
 
@@ -245,7 +240,7 @@ function renderHTML(title, pageType, data = {}) {
             <div class="logo">🛡️ HoneyShield Cyber Defense Console</div>
             ${data.user ? `
                 <div class="user-nav">
-                    <button id="sirenToggleBtn" class="btn-siren" onclick="enableSirenAudio()">🔔 Enable Siren Sound</button>
+                    <button id="sirenToggleBtn" class="btn-siren" onclick="toggleSirenAudio()">🔔 Enable Siren Sound</button>
                     <span>Logged as: <b>${escapeHTML(data.user)}</b></span>
                     <a href="/logout" class="btn-logout">Logout</a>
                 </div>
@@ -512,25 +507,57 @@ const SIREN_SCRIPT = `
     let sirenAudioCtx = null;
     let lastLogCount = 0;
 
-    function enableSirenAudio() {
-        if (!sirenAudioCtx) {
-            sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (sirenAudioCtx.state === 'suspended') {
-            sirenAudioCtx.resume();
-        }
-        
+    function setSirenUIState(active) {
         const btn = document.getElementById('sirenToggleBtn');
-        if (btn) {
-            btn.classList.add('active');
+        if (!btn) return;
+        if (active) {
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#10b981';
             btn.innerHTML = '🔊 Siren Sound Active';
+        } else {
+            btn.style.background = 'rgba(239, 68, 68, 0.2)';
+            btn.style.borderColor = '#ef4444';
+            btn.style.color = '#ef4444';
+            btn.innerHTML = '🔔 Enable Siren Sound';
         }
+    }
 
-        // Test chime
-        playSirenSound();
+    function initSirenState() {
+        const active = localStorage.getItem('sirenEnabled') === 'true';
+        setSirenUIState(active);
+        if (active) {
+            if (!sirenAudioCtx) {
+                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (sirenAudioCtx.state === 'suspended') {
+                sirenAudioCtx.resume();
+            }
+        }
+    }
+
+    function toggleSirenAudio() {
+        const currentState = localStorage.getItem('sirenEnabled') === 'true';
+        const newState = !currentState;
+        localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
+        
+        if (newState) {
+            if (!sirenAudioCtx) {
+                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (sirenAudioCtx.state === 'suspended') {
+                sirenAudioCtx.resume();
+            }
+            setSirenUIState(true);
+            playSirenSound();
+        } else {
+            setSirenUIState(false);
+        }
     }
 
     function playSirenSound() {
+        if (localStorage.getItem('sirenEnabled') !== 'true') return;
+        
         try {
             if (!sirenAudioCtx) {
                 sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -562,6 +589,10 @@ const SIREN_SCRIPT = `
             console.error("Audio Siren Error:", e);
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initSirenState();
+    });
 
     setInterval(async () => {
         try {
