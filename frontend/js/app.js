@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - ENHANCED REAL IP & AUDIBLE SIREN
+ * HONEYSHIELD DEFENSE CONSOLE - COMPACT PIE CHART & FIXED SIREN TOGGLE
  * ============================================================================
  */
 
@@ -10,7 +10,7 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable proxy trusting to correctly parse real client IPs behind proxies/Nginx/Cloudflare
+// Enable proxy trusting to correctly parse real client IPs
 app.set('trust proxy', true);
 
 // ============================================================================
@@ -47,11 +47,9 @@ const honeypotTrapsTriggered = { total: 0 };
 // ============================================================================
 
 function getClientIP(req) {
-    // 1. Check custom proxy headers
     const xForwardedFor = req.headers['x-forwarded-for'];
     if (xForwardedFor) {
-        const ips = xForwardedFor.split(',');
-        return ips[0].trim();
+        return xForwardedFor.split(',')[0].trim();
     }
 
     const cfIP = req.headers['cf-connecting-ip'];
@@ -60,7 +58,6 @@ function getClientIP(req) {
     const realIP = req.headers['x-real-ip'];
     if (realIP) return realIP;
 
-    // 2. Fallback to express req.ip or socket
     let ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
     if (ip.includes('::ffff:')) {
         ip = ip.replace('::ffff:', '');
@@ -203,6 +200,12 @@ function renderHTML(title, pageType, data = {}) {
                 transition: all 0.2s;
             }
 
+            .btn-siren.active {
+                background: rgba(16, 185, 129, 0.2) !important;
+                border-color: #10b981 !important;
+                color: #10b981 !important;
+            }
+
             .btn-logout { color: var(--accent-red); text-decoration: none; font-weight: 600; }
 
             .container { padding: 30px; max-width: 1300px; margin: 0 auto; width: 100%; flex: 1; }
@@ -214,7 +217,7 @@ function renderHTML(title, pageType, data = {}) {
 
             .main-dashboard-grid {
                 display: grid;
-                grid-template-columns: 2fr 1fr;
+                grid-template-columns: 2.2fr 1fr;
                 gap: 25px;
             }
 
@@ -250,7 +253,16 @@ function renderHTML(title, pageType, data = {}) {
             .top-actions { display: flex; gap: 10px; }
             .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); }
 
-            .pie-chart-container { position: relative; height: 280px; width: 100%; display: flex; justify-content: center; align-items: center; }
+            /* SMALL COMPACT PIE CHART CONTAINER */
+            .pie-chart-container { 
+                position: relative; 
+                height: 170px; 
+                max-width: 170px;
+                margin: 0 auto;
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+            }
         </style>
     </head>
     <body>
@@ -258,7 +270,7 @@ function renderHTML(title, pageType, data = {}) {
             <div class="logo">🛡️ HoneyShield Cyber Defense Console</div>
             ${data.user ? `
                 <div class="user-nav">
-                    <button id="sirenToggleBtn" class="btn-siren">🔔 Enable Siren Sound</button>
+                    <button id="sirenToggleBtn" class="btn-siren" onclick="toggleSirenAudio()">🔔 Enable Siren Sound</button>
                     <span>Logged as: <b>${escapeHTML(data.user)}</b></span>
                     <a href="/logout" class="btn-logout">Logout</a>
                 </div>
@@ -347,10 +359,10 @@ function renderHTML(title, pageType, data = {}) {
                         </table>
                     </div>
 
-                    <!-- RIGHT CORNER: ATTACK VECTOR PIE CHART -->
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">📊 Attack Vectors (Pie Chart)</div>
+                    <!-- RIGHT CORNER: COMPACT PIE CHART -->
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center;">
+                        <div class="card-header" style="width: 100%;">
+                            <div class="card-title">📊 Vectors Breakdown</div>
                         </div>
                         <div class="pie-chart-container">
                             <canvas id="attackPieChart"></canvas>
@@ -380,7 +392,7 @@ function renderHTML(title, pageType, data = {}) {
                         new Chart(ctx, {
                             type: 'pie',
                             data: {
-                                labels: ['SQLi', 'XSS', 'Brute Force', 'Honeypot Trap', 'Others'],
+                                labels: ['SQLi', 'XSS', 'Brute', 'Trap', 'Others'],
                                 datasets: [{
                                     data: [${attackCounts['SQLi']}, ${attackCounts['XSS']}, ${attackCounts['Brute Force']}, ${attackCounts['Honeypot Trap']}, ${attackCounts['Others']}],
                                     backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#8b5cf6', '#64748b'],
@@ -394,7 +406,7 @@ function renderHTML(title, pageType, data = {}) {
                                 plugins: {
                                     legend: {
                                         position: 'bottom',
-                                        labels: { color: '#94a3b8', font: { size: 12 } }
+                                        labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 }
                                     }
                                 }
                             }
@@ -556,106 +568,87 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================================================
-// 7. EXPLICIT SIREN BUTTON & POLLING SCRIPT
+// 7. SIREN TOGGLE & POLLING SCRIPT
 // ============================================================================
 const SIREN_SCRIPT = `
 <script>
     let sirenAudioCtx = null;
     let lastLogCount = 0;
 
-    function setSirenUIState(active) {
+    function getAudioContext() {
+        if (!sirenAudioCtx) {
+            sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+            sirenAudioCtx.resume();
+        }
+        return sirenAudioCtx;
+    }
+
+    function playSirenBeep() {
+        if (localStorage.getItem('sirenEnabled') !== 'true') return;
+        
+        try {
+            const ctx = getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sawtooth';
+            const now = ctx.currentTime;
+
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.6);
+
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.8);
+        } catch (e) {
+            console.error("Audio Play Error:", e);
+        }
+    }
+
+    function updateSirenUI(isEnabled) {
         const btn = document.getElementById('sirenToggleBtn');
         if (!btn) return;
-        if (active) {
-            btn.style.background = 'rgba(16, 185, 129, 0.2)';
-            btn.style.borderColor = '#10b981';
-            btn.style.color = '#10b981';
+        
+        if (isEnabled) {
+            btn.classList.add('active');
             btn.innerHTML = '🔊 Siren Sound Active';
         } else {
-            btn.style.background = 'rgba(239, 68, 68, 0.2)';
-            btn.style.borderColor = '#ef4444';
-            btn.style.color = '#ef4444';
+            btn.classList.remove('active');
             btn.innerHTML = '🔔 Enable Siren Sound';
         }
     }
 
-    function playSirenSound() {
-        if (localStorage.getItem('sirenEnabled') !== 'true') return;
-
-        try {
-            if (!sirenAudioCtx) {
-                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            if (sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume().then(() => triggerOscillator());
-            } else {
-                triggerOscillator();
-            }
-        } catch (e) {
-            console.error("Audio Siren Error:", e);
-        }
-    }
-
-    function triggerOscillator() {
-        if (!sirenAudioCtx) return;
-        const osc = sirenAudioCtx.createOscillator();
-        const gain = sirenAudioCtx.createGain();
-
-        osc.type = 'sawtooth';
-        const now = sirenAudioCtx.currentTime;
-
-        osc.frequency.setValueAtTime(500, now);
-        osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
-        osc.frequency.linearRampToValueAtTime(500, now + 0.6);
-        osc.frequency.linearRampToValueAtTime(1200, now + 0.9);
-
-        gain.gain.setValueAtTime(0.9, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-
-        osc.connect(gain);
-        gain.connect(sirenAudioCtx.destination);
-
-        osc.start(now);
-        osc.stop(now + 1.2);
-    }
-
     window.toggleSirenAudio = function() {
-        const currentState = localStorage.getItem('sirenEnabled') === 'true';
-        const newState = !currentState;
+        const isCurrentlyEnabled = localStorage.getItem('sirenEnabled') === 'true';
+        const newState = !isCurrentlyEnabled;
+        
         localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
+        updateSirenUI(newState);
 
         if (newState) {
-            if (!sirenAudioCtx) {
-                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume();
-            }
-            setSirenUIState(true);
-            playSirenSound();
-        } else {
-            setSirenUIState(false);
+            getAudioContext();
+            playSirenBeep(); // Test sound on enable
         }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        const active = localStorage.getItem('sirenEnabled') === 'true';
-        setSirenUIState(active);
+        const isEnabled = localStorage.getItem('sirenEnabled') === 'true';
+        updateSirenUI(isEnabled);
 
-        const btn = document.getElementById('sirenToggleBtn');
-        if (btn) {
-            btn.addEventListener('click', window.toggleSirenAudio);
-        }
-
-        // Global User-Interaction audio context unblocker
-        const unlockAudio = () => {
-            if (sirenAudioCtx && sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume();
+        // Global unlock on click
+        document.body.addEventListener('click', () => {
+            if (localStorage.getItem('sirenEnabled') === 'true') {
+                getAudioContext();
             }
-            document.removeEventListener('click', unlockAudio);
-        };
-        document.addEventListener('click', unlockAudio);
+        }, { once: true });
     });
 
     setInterval(async () => {
@@ -664,8 +657,8 @@ const SIREN_SCRIPT = `
             const data = await res.json();
             
             if (lastLogCount > 0 && data.logs.length > lastLogCount) {
-                playSirenSound();
-                setTimeout(() => { window.location.reload(); }, 500);
+                playSirenBeep();
+                setTimeout(() => { window.location.reload(); }, 400);
             }
             lastLogCount = data.logs.length;
         } catch (err) {
