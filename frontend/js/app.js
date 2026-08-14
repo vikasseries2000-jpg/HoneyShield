@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - FULL REAL-TIME LOGS & SIREN ALARM ENGINE
+ * HONEYSHIELD DEFENSE CONSOLE - PIE CHART & EXPLICIT SIREN BUTTON
  * ============================================================================
  */
 
@@ -81,7 +81,6 @@ function classifyAttackPayload(username = '', password = '') {
     return 'Brute Force / Bad Credentials';
 }
 
-// REAL-TIME IST TIME CAPTURE
 function getFormattedISTTime() {
     return new Date().toLocaleTimeString('en-IN', { 
         timeZone: 'Asia/Kolkata',
@@ -173,9 +172,27 @@ function renderHTML(title, pageType, data = {}) {
                 align-items: center; 
             }
             .logo { font-size: 22px; font-weight: 700; color: var(--accent-blue); display: flex; align-items: center; gap: 10px; }
-            .user-nav { font-size: 14px; color: var(--text-muted); }
+            .user-nav { display: flex; align-items: center; gap: 15px; font-size: 14px; color: var(--text-muted); }
             .user-nav b { color: var(--text-main); }
-            .btn-logout { color: var(--accent-red); margin-left: 12px; text-decoration: none; font-weight: 600; }
+            
+            .btn-siren {
+                background: rgba(239, 68, 68, 0.2);
+                border: 1px solid var(--accent-red);
+                color: var(--accent-red);
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-weight: 700;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .btn-siren.active {
+                background: rgba(16, 185, 129, 0.2);
+                border-color: var(--accent-green);
+                color: var(--accent-green);
+            }
+
+            .btn-logout { color: var(--accent-red); text-decoration: none; font-weight: 600; }
 
             .container { padding: 30px; max-width: 1300px; margin: 0 auto; width: 100%; flex: 1; }
             
@@ -183,6 +200,17 @@ function renderHTML(title, pageType, data = {}) {
             .card-stat { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; }
             .card-stat h4 { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
             .card-stat .val { font-size: 32px; font-weight: 800; margin-top: 8px; }
+
+            /* SPLIT LAYOUT: STATS/TABLE LEFT, PIE CHART RIGHT */
+            .main-dashboard-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 25px;
+            }
+
+            @media (max-width: 992px) {
+                .main-dashboard-grid { grid-template-columns: 1fr; }
+            }
 
             .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
             .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -209,7 +237,7 @@ function renderHTML(title, pageType, data = {}) {
             .top-actions { display: flex; gap: 10px; }
             .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); }
 
-            .chart-container { position: relative; height: 260px; width: 100%; margin-top: 10px; }
+            .pie-chart-container { position: relative; height: 280px; width: 100%; display: flex; justify-content: center; align-items: center; }
         </style>
     </head>
     <body>
@@ -217,7 +245,8 @@ function renderHTML(title, pageType, data = {}) {
             <div class="logo">🛡️ HoneyShield Cyber Defense Console</div>
             ${data.user ? `
                 <div class="user-nav">
-                    Logged as: <b>${escapeHTML(data.user)}</b>
+                    <button id="sirenToggleBtn" class="btn-siren" onclick="enableSirenAudio()">🔔 Enable Siren Sound</button>
+                    <span>Logged as: <b>${escapeHTML(data.user)}</b></span>
                     <a href="/logout" class="btn-logout">Logout</a>
                 </div>
             ` : ''}
@@ -242,90 +271,93 @@ function renderHTML(title, pageType, data = {}) {
                 <div class="grid-stats">
                     <div class="card-stat">
                         <h4>Total Threat Logged</h4>
-                        <div class="val" style="color: var(--accent-yellow);" id="statTotalAttacks">${threatLogs.length}</div>
+                        <div class="val" style="color: var(--accent-yellow);">${threatLogs.length}</div>
                     </div>
                     <div class="card-stat">
                         <h4>Blocked Attacker IPs</h4>
-                        <div class="val" style="color: var(--accent-red);" id="statBlockedIPs">${blockedIPs.size}</div>
+                        <div class="val" style="color: var(--accent-red);">${blockedIPs.size}</div>
                     </div>
                     <div class="card-stat">
                         <h4>Honeypot Traps Triggered</h4>
-                        <div class="val" style="color: var(--accent-blue);" id="statHoneypots">${honeypotTrapsTriggered.total}</div>
+                        <div class="val" style="color: var(--accent-blue);">${honeypotTrapsTriggered.total}</div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">📊 Attack Vector Distribution (Live Chart)</div>
+                <div class="main-dashboard-grid">
+                    <!-- LEFT SIDE: REAL-TIME THREAT LOGS TABLE -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🚨 Real-Time Threat Intelligence Logs (IST Time)</div>
+                            <div class="top-actions">
+                                <a href="/api/export-csv" download="threat_logs.csv"><button class="btn-sm">📥 Export CSV</button></a>
+                                <a href="/unblock-me"><button class="btn-sm" style="color: var(--accent-green);">🔓 Unblock All IPs</button></a>
+                            </div>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time (IST)</th>
+                                    <th>Attacker IP</th>
+                                    <th>Attack Type</th>
+                                    <th>Captured User</th>
+                                    <th>Captured Pass</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${threatLogs.map(log => `
+                                    <tr>
+                                        <td>${log.time}</td>
+                                        <td><span class="ip-highlight">${escapeHTML(log.ip)}</span></td>
+                                        <td>${escapeHTML(log.attackType)}</td>
+                                        <td><span class="payload-user">${escapeHTML(log.attemptedUser)}</span></td>
+                                        <td><code>${escapeHTML(log.attemptedPass)}</code></td>
+                                        <td>
+                                            <span class="${log.action === 'BLOCKED' ? 'badge-blocked' : 'badge-logged'}">
+                                                ${log.action} (${log.attackCount}/3)
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                                ${threatLogs.length === 0 ? `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="attackChart"></canvas>
-                    </div>
-                </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">🚨 Real-Time Threat Intelligence Logs (IST Time)</div>
-                        <div class="top-actions">
-                            <a href="/api/export-csv" download="threat_logs.csv"><button class="btn-sm">📥 Export CSV</button></a>
-                            <a href="/unblock-me"><button class="btn-sm" style="color: var(--accent-green);">🔓 Unblock All IPs</button></a>
+                    <!-- RIGHT CORNER: ATTACK VECTOR PIE CHART -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📊 Attack Vectors (Pie Chart)</div>
+                        </div>
+                        <div class="pie-chart-container">
+                            <canvas id="attackPieChart"></canvas>
                         </div>
                     </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Time (IST)</th>
-                                <th>Attacker IP</th>
-                                <th>Attack Type</th>
-                                <th>Captured Username</th>
-                                <th>Captured Password</th>
-                                <th>Enforcement Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logsTableBody">
-                            ${threatLogs.map(log => `
-                                <tr>
-                                    <td>${log.time}</td>
-                                    <td><span class="ip-highlight">${escapeHTML(log.ip)}</span></td>
-                                    <td>${escapeHTML(log.attackType)}</td>
-                                    <td><span class="payload-user">${escapeHTML(log.attemptedUser)}</span></td>
-                                    <td><code>${escapeHTML(log.attemptedPass)}</code></td>
-                                    <td>
-                                        <span class="${log.action === 'BLOCKED' ? 'badge-blocked' : 'badge-logged'}">
-                                            ${log.action} (${log.attackCount}/3)
-                                        </span>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                            ${threatLogs.length === 0 ? `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
-                        </tbody>
-                    </table>
                 </div>
 
                 <script>
-                    let myAttackChart = null;
-
                     document.addEventListener('DOMContentLoaded', () => {
-                        const ctx = document.getElementById('attackChart').getContext('2d');
-                        myAttackChart = new Chart(ctx, {
-                            type: 'bar',
+                        const ctx = document.getElementById('attackPieChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'pie',
                             data: {
-                                labels: ['SQL Injection', 'XSS', 'Brute Force', 'Honeypot Trap', 'Others'],
+                                labels: ['SQLi', 'XSS', 'Brute Force', 'Honeypot Trap', 'Others'],
                                 datasets: [{
-                                    label: 'Attack Attempts',
                                     data: [${attackCounts['SQLi']}, ${attackCounts['XSS']}, ${attackCounts['Brute Force']}, ${attackCounts['Honeypot Trap']}, ${attackCounts['Others']}],
                                     backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#8b5cf6', '#64748b'],
-                                    borderRadius: 6
+                                    borderWidth: 2,
+                                    borderColor: '#131f37'
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: {
-                                    y: { beginAtZero: true, ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } },
-                                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: { color: '#94a3b8', font: { size: 12 } }
+                                    }
                                 }
                             }
                         });
@@ -473,34 +505,31 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================================================
-// 7. SIREN ALARM & DYNAMIC POLLING SCRIPT
+// 7. EXPLICIT SIREN BUTTON & POLLING SCRIPT
 // ============================================================================
 const SIREN_SCRIPT = `
 <script>
     let sirenAudioCtx = null;
     let lastLogCount = 0;
 
-    // UNLOCK AUDIO ON USER INTERACTION
-    function unlockAudio() {
+    function enableSirenAudio() {
         if (!sirenAudioCtx) {
             sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         if (sirenAudioCtx.state === 'suspended') {
             sirenAudioCtx.resume();
         }
-        const banner = document.getElementById('audioBanner');
-        if (banner) {
-            banner.style.background = 'rgba(16, 185, 129, 0.2)';
-            banner.style.color = '#10b981';
-            banner.style.border = '1px solid #10b981';
-            banner.innerHTML = '🔊 <b>Siren Audio Active:</b> System ready to play loud alarm on 3rd attack/block!';
+        
+        const btn = document.getElementById('sirenToggleBtn');
+        if (btn) {
+            btn.classList.add('active');
+            btn.innerHTML = '🔊 Siren Sound Active';
         }
+
+        // Test chime
+        playSirenSound();
     }
 
-    window.addEventListener('click', unlockAudio, { once: true });
-    window.addEventListener('keydown', unlockAudio, { once: true });
-
-    // DUAL-FREQUENCY SIREN GENERATOR
     function playSirenSound() {
         try {
             if (!sirenAudioCtx) {
@@ -516,7 +545,6 @@ const SIREN_SCRIPT = `
             osc.type = 'sawtooth';
             const now = sirenAudioCtx.currentTime;
 
-            // Pitch sweep from 500Hz to 1200Hz
             osc.frequency.setValueAtTime(500, now);
             osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
             osc.frequency.linearRampToValueAtTime(500, now + 0.6);
@@ -535,7 +563,6 @@ const SIREN_SCRIPT = `
         }
     }
 
-    // REAL-TIME POLLING LOOP (EVERY 1.5 SECONDS)
     setInterval(async () => {
         try {
             const res = await fetch('/api/logs');
@@ -544,12 +571,10 @@ const SIREN_SCRIPT = `
             if (lastLogCount > 0 && data.logs.length > lastLogCount) {
                 const latestLog = data.logs[0];
                 
-                // Play Siren if attack count hits 3 or IP gets blocked
                 if (latestLog.attackCount >= 3 || latestLog.action === 'BLOCKED' || latestLog.isNewBlock) {
                     playSirenSound();
                 }
 
-                // Smoothly refresh page to update chart and log table in real-time IST
                 setTimeout(() => { window.location.reload(); }, 300);
             }
             lastLogCount = data.logs.length;
@@ -557,24 +582,6 @@ const SIREN_SCRIPT = `
             console.error("Polling error:", err);
         }
     }, 1500);
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const header = document.querySelector('header');
-        if (header) {
-            const banner = document.createElement('div');
-            banner.id = 'audioBanner';
-            banner.style.padding = '10px 20px';
-            banner.style.margin = '15px 30px 0 30px';
-            banner.style.borderRadius = '6px';
-            banner.style.background = 'rgba(239, 68, 68, 0.2)';
-            banner.style.color = '#ef4444';
-            banner.style.border = '1px solid #ef4444';
-            banner.style.cursor = 'pointer';
-            banner.style.fontSize = '14px';
-            banner.innerHTML = '⚠️ <b>Siren Audio Standby:</b> Click anywhere on screen ONCE to enable audio siren alarm!';
-            header.after(banner);
-        }
-    });
 </script>
 `;
 
@@ -590,7 +597,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
-// 8. SERVER START
+// 8. SERVER LISTEN
 // ============================================================================
 app.listen(PORT, () => {
     console.log(`🛡️ HoneyShield Engine running on port ${PORT}`);
