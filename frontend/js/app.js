@@ -63,8 +63,8 @@ function generateFakeAttackerIP() {
     return `${Math.floor(Math.random() * 200) + 10}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
 }
 
-// Attack Register & Logging Function
-function registerAttack(realIP, route, attackType, userAgent) {
+// Attack Register & Logging Function (Updated with Username and Password capture)
+function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
     ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
     const isBlocked = ipAttackCounts[realIP] >= 3;
     
@@ -77,6 +77,8 @@ function registerAttack(realIP, route, attackType, userAgent) {
         ip: realIP, // Real Attacker IP
         route: route,
         attackType: attackType,
+        attemptedUser: attemptedUser, // Captured Username
+        attemptedPass: attemptedPass, // Captured Password
         action: isBlocked ? 'BLOCKED' : 'LOGGED',
         userAgent: userAgent || 'Unknown',
         isNewBlock: isBlocked
@@ -136,6 +138,7 @@ function renderHTML(page, title, data = {}) {
                     td { padding: 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
                     .attack-badge { background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
                     .blocked-badge { background: rgba(239, 68, 68, 0.9); color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+                    code { background: #0b1320; padding: 2px 6px; border-radius: 4px; color: #f59e0b; }
                 </style>
             </head>
             <body>
@@ -152,6 +155,8 @@ function renderHTML(page, title, data = {}) {
                             <tr>
                                 <th>Time</th>
                                 <th>Real Attacker IP</th>
+                                <th>Attempted Username</th>
+                                <th>Attempted Password</th>
                                 <th>Target Route</th>
                                 <th>Detected Attack Type</th>
                                 <th>Action Taken</th>
@@ -159,11 +164,13 @@ function renderHTML(page, title, data = {}) {
                         </thead>
                         <tbody id="logsTableBody">
                             ${threatLogs.length === 0 ? `
-                                <tr><td colspan="5" style="text-align:center; color:#64748b; padding:40px;">No threats logged yet!</td></tr>
+                                <tr><td colspan="7" style="text-align:center; color:#64748b; padding:40px;">No threats logged yet!</td></tr>
                             ` : threatLogs.map(log => `
                                 <tr>
                                     <td>${escapeHTML(log.time)}</td>
                                     <td><b style="color:#e2e8f0;">${escapeHTML(log.ip)}</b></td>
+                                    <td><b style="color:#ef4444;">${escapeHTML(log.attemptedUser)}</b></td>
+                                    <td><code>${escapeHTML(log.attemptedPass)}</code></td>
                                     <td><span style="color:#38bdf8;">${escapeHTML(log.route)}</span></td>
                                     <td><span class="attack-badge">${escapeHTML(log.attackType)}</span></td>
                                     <td><span class="${log.action.includes('BLOCKED') ? 'blocked-badge' : ''}">${escapeHTML(log.action)}</span></td>
@@ -174,10 +181,10 @@ function renderHTML(page, title, data = {}) {
                 </div>
                 <script>
                     function exportCSV() {
-                        let csv = 'Time,Real Attacker IP,Target Route,Attack Type,Action\\n';
+                        let csv = 'Time,Real Attacker IP,Attempted Username,Attempted Password,Target Route,Attack Type,Action\\n';
                         const logs = ${JSON.stringify(threatLogs)};
                         logs.forEach(l => { 
-                            csv += '"' + l.time + '","' + l.ip + '","' + l.route + '","' + l.attackType + '","' + l.action + '"\\n'; 
+                            csv += '"' + l.time + '","' + l.ip + '","' + (l.attemptedUser || 'N/A') + '","' + (l.attemptedPass || 'N/A') + '","' + l.route + '","' + l.attackType + '","' + l.action + '"\\n'; 
                         });
                         const blob = new Blob([csv], { type: 'text/csv' });
                         const a = document.createElement('a');
@@ -227,6 +234,7 @@ function renderHTML(page, title, data = {}) {
                 .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
                 input:checked + .slider { background-color: #ef4444; }
                 input:checked + .slider:before { transform: translateX(22px); }
+                code { background: #0b1320; padding: 2px 5px; border-radius: 3px; color: #f59e0b; font-size: 11px; }
             </style>
         </head>
         <body>
@@ -270,19 +278,21 @@ function renderHTML(page, title, data = {}) {
                         <thead>
                             <tr>
                                 <th>Time</th>
-                                <th>Real Attacker IP</th>
-                                <th>Target Route</th>
+                                <th>Attacker IP</th>
+                                <th>Username</th>
+                                <th>Password</th>
                                 <th>Attack Type</th>
                             </tr>
                         </thead>
                         <tbody id="recentLogsTable">
                             ${threatLogs.slice(0, 5).length === 0 ? `
-                                <tr><td colspan="4" style="text-align:center; color:#64748b; padding:30px;">No attacks detected yet.</td></tr>
+                                <tr><td colspan="5" style="text-align:center; color:#64748b; padding:30px;">No attacks detected yet.</td></tr>
                             ` : threatLogs.slice(0, 5).map(log => `
                                 <tr>
                                     <td>${escapeHTML(log.time)}</td>
                                     <td><b>${escapeHTML(log.ip)}</b></td>
-                                    <td><span style="color:#38bdf8;">${escapeHTML(log.route)}</span></td>
+                                    <td><b style="color:#ef4444;">${escapeHTML(log.attemptedUser)}</b></td>
+                                    <td><code>${escapeHTML(log.attemptedPass)}</code></td>
                                     <td><span class="attack-badge">${escapeHTML(log.attackType)}</span></td>
                                 </tr>
                             `).join('')}
@@ -403,7 +413,8 @@ function renderHTML(page, title, data = {}) {
                                     tableHtml += '<tr>' +
                                         '<td>' + log.time + '</td>' +
                                         '<td><b>' + log.ip + '</b></td>' +
-                                        '<td><span style="color:#38bdf8;">' + log.route + '</span></td>' +
+                                        '<td><b style="color:#ef4444;">' + (log.attemptedUser || 'N/A') + '</b></td>' +
+                                        '<td><code>' + (log.attemptedPass || 'N/A') + '</code></td>' +
                                         '<td><span class="attack-badge">' + log.attackType + '</span></td>' +
                                         '</tr>';
                                 });
@@ -580,8 +591,8 @@ app.post('/login', (req, res) => {
         return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
     } 
     
-    // Invalid Login -> Register Attack with REAL Attacker IP
-    const isBlocked = registerAttack(clientIP, '/login', 'Brute Force / Bad Credentials', req.get('User-Agent'));
+    // Invalid Login -> Register Attack with REAL Attacker IP and Captured Credentials
+    const isBlocked = registerAttack(clientIP, '/login', 'Brute Force / Bad Credentials', req.get('User-Agent'), username, password);
     const fakeIP = generateFakeAttackerIP();
 
     if (isBlocked) {
@@ -609,7 +620,7 @@ app.get('/admin', (req, res) => {
     const clientIP = getClientIP(req);
 
     if (!req.session || !req.session.user || req.session.role !== 'admin') {
-        const isBlocked = registerAttack(clientIP, '/admin', 'Unauthorized Admin Access Attempt', req.get('User-Agent'));
+        const isBlocked = registerAttack(clientIP, '/admin', 'Unauthorized Admin Access Attempt', req.get('User-Agent'), 'N/A (Direct Access)', 'N/A');
         const fakeIP = generateFakeAttackerIP();
 
         if (isBlocked) {
@@ -636,4 +647,69 @@ app.get('/logout', (req, res) => {
 // Server Run
 app.listen(PORT, '0.0.0.0', () => {
     console.log(` HoneyShield Defense Server running on http://localhost:${PORT}`);
+});
+// ==========================================
+// OVERRIDE: CAPTURE ATTACKER USERNAME & PASSWORD
+// ==========================================
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const clientIP = getClientIP(req);
+
+    // 1. IP Block Check
+    if (blockedIPs.has(clientIP)) {
+        return res.status(403).send(`
+            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
+                <h1>🛑 ACCESS BLOCKED</h1>
+                <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">IP <b style="color:#f59e0b;">${clientIP}</b> was blocked due to suspicious activity.</p>
+            </div>
+        `);
+    }
+
+    // 2. SQL Injection / Payload Detection
+    const attackPattern = /(\'|\"|\-\-|\b(OR|AND|SELECT|INSERT|DELETE|DROP)\b|<script>)/i;
+    let detectedType = 'Brute Force / Bad Credentials';
+
+    if (attackPattern.test(username) || attackPattern.test(password)) {
+        detectedType = 'SQL Injection / Malicious Payload';
+    }
+
+    // 3. Valid Credentials Check (admin -> adminpassword)
+    if (USERS_DB[username] && USERS_DB[username].password === password) {
+        req.session.user = username;
+        req.session.role = USERS_DB[username].role;
+        return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
+    } 
+
+    // 4. Register Attack with Captured Username & Password
+    const isBlocked = registerAttack(clientIP, '/login', detectedType, req.get('User-Agent'), username, password);
+    const fakeIP = generateFakeAttackerIP();
+
+    if (isBlocked) {
+        return res.status(403).send(`
+            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
+                <h1>🛑 ACCESS BLOCKED DUE TO MULTIPLE ATTACKS</h1>
+                <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">Attacker IP <b style="color:#ef4444;">${clientIP}</b> exceeded attack limits (3/3 attempts).</p>
+            </div>
+        `);
+    }
+
+    res.send(renderHTML('login', 'Login', { 
+        clientIP, 
+        fakeIP, 
+        error: `⚠️ Warning: Invalid Credentials! Attacker IP ${clientIP} logged. Attempt (${ipAttackCounts[clientIP]}/3)` 
+    }));
+});
+
+// Missing Logout Route
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
+});
+
+// App Listener
+app.listen(PORT, () => {
+    console.log(` HoneyShield Server running on http://localhost:${PORT}`);
 });
