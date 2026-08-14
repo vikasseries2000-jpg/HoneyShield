@@ -1,16 +1,14 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - ENTERPRISE HONEYPOT & THREAT INTELLIGENCE
+ * HONEYSHIELD DEFENSE CONSOLE - PRODUCTION READY HONEYPOT ENGINE
  * ============================================================================
- * Features:
- *  - 3-Strike IP Auto-Blocking Mechanism
- *  - Web Audio API Live Emergency Siren Trigger (3rd Attack/Block Event)
+ * Updates:
+ *  - Removed hardcoded "Demo Account" password from Login Page
+ *  - Captured Attacker Payload/Credentials clearly displayed in Admin Console
+ *  - Web Audio API Dual-Frequency Siren on 3rd Attack/Block Event
  *  - Real-Time IST Timezone Capture (Asia/Kolkata)
- *  - Exact Attacker Payload & Credential Capture (User & Pass text)
- *  - Multi-Vector Attack Classifier (SQLi, XSS, Brute Force, Path Traversal)
- *  - Multiple Decoy Honeypot Routes (/wp-admin, /phpmyadmin, /.env, /backup.sql)
- *  - Live Polling API & Client-Side Auto-Refresh
- *  - Emergency IP Unblock & CSV Intelligence Export Endpoints
+ *  - Multi-Vector Attack Classifier (SQLi, XSS, Brute Force, Directory Traversal)
+ *  - Emergency IP Unblock Endpoint (/unblock-me)
  * ============================================================================
  */
 
@@ -32,8 +30,8 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { 
-        maxAge: 24 * 60 * 60 * 1000, // 24 Hours
-        secure: false // Set to true if running behind HTTPS
+        maxAge: 24 * 60 * 60 * 1000,
+        secure: false
     }
 }));
 
@@ -50,16 +48,10 @@ const ipAttackCounts = {};
 const threatLogs = [];
 const honeypotTrapsTriggered = { total: 0 };
 
-// System startup time for uptime metric
-const SERVER_START_TIME = new Date();
-
 // ============================================================================
 // 3. UTILITY & HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Extracts real client IP address through proxy layers (Render, Cloudflare, Nginx)
- */
 function getClientIP(req) {
     const cfIP = req.headers['cf-connecting-ip'];
     if (cfIP) return cfIP;
@@ -72,20 +64,6 @@ function getClientIP(req) {
     return req.socket.remoteAddress || req.ip || '127.0.0.1';
 }
 
-/**
- * Generates decoy IP addresses for visual analysis testing
- */
-function generateFakeAttackerIP() {
-    const octet1 = Math.floor(Math.random() * 180) + 10;
-    const octet2 = Math.floor(Math.random() * 255);
-    const octet3 = Math.floor(Math.random() * 255);
-    const octet4 = Math.floor(Math.random() * 254) + 1;
-    return `${octet1}.${octet2}.${octet3}.${octet4}`;
-}
-
-/**
- * Escapes raw HTML input to prevent XSS rendering in the Admin Console
- */
 function escapeHTML(str) {
     if (!str) return 'N/A';
     return String(str)
@@ -96,9 +74,6 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-/**
- * Classifies payload vectors based on signature matching
- */
 function classifyAttackPayload(username = '', password = '') {
     const input = `${username} ${password}`;
 
@@ -115,9 +90,6 @@ function classifyAttackPayload(username = '', password = '') {
     return 'Brute Force / Bad Credentials';
 }
 
-/**
- * Formats date object to Indian Standard Time (IST - Asia/Kolkata)
- */
 function getFormattedISTTime() {
     return new Date().toLocaleTimeString('en-IN', { 
         timeZone: 'Asia/Kolkata',
@@ -128,9 +100,6 @@ function getFormattedISTTime() {
     });
 }
 
-/**
- * Central Attack Registration Engine
- */
 function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
     ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
     const currentCount = ipAttackCounts[realIP];
@@ -154,7 +123,7 @@ function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N
         attackCount: currentCount
     };
 
-    threatLogs.unshift(newLog); // Prepend so newest attack is always at index 0
+    threatLogs.unshift(newLog);
     return isBlocked;
 }
 
@@ -251,29 +220,26 @@ function renderHTML(title, pageType, data = {}) {
         <div class="container">
             ${pageType === 'login' ? `
                 <div class="card login-box">
-                    <h2 style="margin-bottom: 20px; text-align: center; color: var(--accent-blue);">Secure Authentication</h2>
+                    <h2 style="margin-bottom: 20px; text-align: center; color: var(--accent-blue);">System Portal Login</h2>
                     ${data.error ? `<div class="error-box">${data.error}</div>` : ''}
                     <form action="/login" method="POST">
-                        <label>Username / Payload Input</label>
-                        <input type="text" name="username" placeholder="Enter username or attack test" required autocomplete="off">
-                        <label>Password Input</label>
+                        <label>Username</label>
+                        <input type="text" name="username" placeholder="Enter username" required autocomplete="off">
+                        <label>Password</label>
                         <input type="password" name="password" placeholder="Enter password" required autocomplete="off">
-                        <button type="submit">Authenticate</button>
+                        <button type="submit">Sign In</button>
                     </form>
-                    <div style="margin-top: 15px; text-align: center; font-size: 12px; color: var(--text-muted);">
-                        Demo Account: <code>admin</code> / <code>adminpassword</code>
-                    </div>
                 </div>
             ` : ''}
 
             ${pageType === 'admin' ? `
                 <div class="grid-stats">
                     <div class="card-stat">
-                        <h4>Total Attack Attempts</h4>
+                        <h4>Total Threat Logged</h4>
                         <div class="val" style="color: var(--accent-yellow);" id="statTotalAttacks">${threatLogs.length}</div>
                     </div>
                     <div class="card-stat">
-                        <h4>Active IP Blocks</h4>
+                        <h4>Blocked Attacker IPs</h4>
                         <div class="val" style="color: var(--accent-red);" id="statBlockedIPs">${blockedIPs.size}</div>
                     </div>
                     <div class="card-stat">
@@ -325,8 +291,8 @@ function renderHTML(title, pageType, data = {}) {
 
             ${pageType === 'dashboard' ? `
                 <div class="card">
-                    <h2 style="color: var(--accent-green); margin-bottom: 10px;">Welcome to Protected User Terminal</h2>
-                    <p style="color: var(--text-muted);">You are authenticated as an authorized operator. HoneyShield active monitoring system is running in background.</p>
+                    <h2 style="color: var(--accent-green); margin-bottom: 10px;">Welcome to User Terminal</h2>
+                    <p style="color: var(--text-muted);">You are authenticated as a standard operator. HoneyShield active monitoring system is running in background.</p>
                 </div>
             ` : ''}
         </div>
@@ -336,7 +302,7 @@ function renderHTML(title, pageType, data = {}) {
 }
 
 // ============================================================================
-// 5. DECITY & HONEYPOT ROUTES (DECOY TRAPS FOR RECON)
+// 5. DECOY HONEYPOT ROUTES
 // ============================================================================
 const honeypotPaths = ['/wp-admin', '/phpmyadmin', '/.env', '/backup.sql', '/admin.php', '/api/v1/config'];
 
@@ -348,7 +314,7 @@ honeypotPaths.forEach(trapPath => {
         registerAttack(
             clientIP, 
             trapPath, 
-            `Honeypot Trap Triggered (${trapPath})`, 
+            `Honeypot Trap (${trapPath})`, 
             req.get('User-Agent'), 
             'UNAUTHORIZED_RECON', 
             'N/A'
@@ -358,17 +324,15 @@ honeypotPaths.forEach(trapPath => {
             <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
                 <h1>🛑 HONEYPOT TRAP TRIGGERED</h1>
                 <p style="color:#e2e8f0; margin-top:10px;">Unlawful reconnaissance detected from IP: <b>${clientIP}</b></p>
-                <p style="color:#94a3b8; margin-top:5px;">This event has been logged and reported to HoneyShield Security Intelligence.</p>
             </div>
         `);
     });
 });
 
 // ============================================================================
-// 6. APPLICATION ENDPOINTS & AUTH LOGIC
+// 6. ROUTES & AUTHENTICATION
 // ============================================================================
 
-// Index Route
 app.get('/', (req, res) => {
     if (req.session.user) {
         return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
@@ -376,7 +340,6 @@ app.get('/', (req, res) => {
     res.send(renderHTML('Login', 'login'));
 });
 
-// Live Log Polling API Endpoint
 app.get('/api/logs', (req, res) => {
     res.json({
         logs: threatLogs,
@@ -386,10 +349,8 @@ app.get('/api/logs', (req, res) => {
     });
 });
 
-// Emergency IP Unblock Route
 app.get('/unblock-me', (req, res) => {
     const clientIP = getClientIP(req);
-    
     blockedIPs.clear();
     for (let ip in ipAttackCounts) {
         ipAttackCounts[ip] = 0;
@@ -404,7 +365,6 @@ app.get('/unblock-me', (req, res) => {
     `);
 });
 
-// CSV Export Endpoint
 app.get('/api/export-csv', (req, res) => {
     if (!req.session.user || req.session.role !== 'admin') {
         return res.status(403).send('Unauthorized');
@@ -420,33 +380,28 @@ app.get('/api/export-csv', (req, res) => {
     res.status(200).send(csvContent);
 });
 
-// Main Login Endpoint (Handles Attack Enforcement & Capture)
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     const clientIP = getClientIP(req);
 
-    // 1. IP Blacklist Gatekeeper
     if (blockedIPs.has(clientIP)) {
         return res.status(403).send(`
             <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
                 <h1>🛑 ACCESS BLOCKED BY HONEYSHIELD</h1>
                 <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">IP Address <b style="color:#f59e0b;">${clientIP}</b> has exceeded allowed attack limits.</p>
-                <p style="color:#94a3b8;">Contact administrator or visit <a href="/unblock-me" style="color:#38bdf8;">/unblock-me</a> to clear locks.</p>
+                <p style="color:#94a3b8;">Visit <a href="/unblock-me" style="color:#38bdf8;">/unblock-me</a> to clear locks.</p>
             </div>
         `);
     }
 
-    // 2. Classify Payload & Attack Vector
     const detectedType = classifyAttackPayload(username, password);
 
-    // 3. Valid Credentials Check
     if (USERS_DB[username] && USERS_DB[username].password === password) {
         req.session.user = username;
         req.session.role = USERS_DB[username].role;
         return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
     }
 
-    // 4. Register Attack Attempt & Capture Credentials
     const isBlocked = registerAttack(clientIP, '/login', detectedType, req.get('User-Agent'), username, password);
 
     if (isBlocked) {
@@ -454,7 +409,6 @@ app.post('/login', (req, res) => {
             <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
                 <h1>🛑 MAXIMUM STRIKES EXCEEDED (3/3)</h1>
                 <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">Attacker IP <b style="color:#ef4444;">${clientIP}</b> is now blacklisted.</p>
-                <p style="color:#94a3b8;">Siren alert dispatched to admin dashboard.</p>
             </div>
         `);
     }
@@ -464,7 +418,6 @@ app.post('/login', (req, res) => {
     }));
 });
 
-// Admin Route
 app.get('/admin', (req, res) => {
     if (!req.session.user || req.session.role !== 'admin') {
         return res.redirect('/');
@@ -472,13 +425,11 @@ app.get('/admin', (req, res) => {
     res.send(renderHTML('Admin Console', 'admin', { user: req.session.user }));
 });
 
-// User Dashboard Route
 app.get('/dashboard', (req, res) => {
     if (!req.session.user) return res.redirect('/');
     res.send(renderHTML('User Dashboard', 'dashboard', { user: req.session.user }));
 });
 
-// Logout Route
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
         res.clearCookie('connect.sid');
@@ -487,14 +438,13 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================================================
-// 7. REAL-TIME POLLING & WEB AUDIO EMERGENCY SIREN SCRIPT
+// 7. REAL-TIME POLLING & SIREN ALARM
 // ============================================================================
 const SIREN_SCRIPT = `
 <script>
     let sirenAudioCtx = null;
     let lastLogCount = 0;
 
-    // Unlocks browser autoplay audio restrictions upon first interaction
     function unlockAudio() {
         if (!sirenAudioCtx) {
             sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -514,7 +464,6 @@ const SIREN_SCRIPT = `
     window.addEventListener('click', unlockAudio, { once: true });
     window.addEventListener('keydown', unlockAudio, { once: true });
 
-    // Synthesizes a loud dual-frequency police siren sound
     function playSirenSound() {
         try {
             if (!sirenAudioCtx) {
@@ -530,7 +479,6 @@ const SIREN_SCRIPT = `
             osc.type = 'sawtooth';
             const now = sirenAudioCtx.currentTime;
 
-            // Frequency Sweep (Wailing Police Siren)
             osc.frequency.setValueAtTime(500, now);
             osc.frequency.linearRampToValueAtTime(1200, now + 0.4);
             osc.frequency.linearRampToValueAtTime(500, now + 0.8);
@@ -549,17 +497,14 @@ const SIREN_SCRIPT = `
         }
     }
 
-    // Real-Time Polling Engine (Every 2 seconds)
     setInterval(async () => {
         try {
             const res = await fetch('/api/logs');
             const data = await res.json();
             
-            // Trigger audio and refresh DOM if new threat log is appended
             if (lastLogCount > 0 && data.logs.length > lastLogCount) {
                 const latestLog = data.logs[0];
                 
-                // Siren triggers specifically on 3rd attempt or BLOCKED status
                 if (latestLog.attackCount >= 3 || latestLog.action === 'BLOCKED' || latestLog.isNewBlock) {
                     playSirenSound();
                 }
@@ -572,7 +517,6 @@ const SIREN_SCRIPT = `
         }
     }, 2000);
 
-    // Render Audio Status Banner
     document.addEventListener("DOMContentLoaded", () => {
         const header = document.querySelector('header');
         if (header) {
@@ -594,7 +538,6 @@ const SIREN_SCRIPT = `
 </script>
 `;
 
-// Middleware to inject Siren & Polling script into Admin Console
 app.use((req, res, next) => {
     const originalSend = res.send;
     res.send = function (body) {
@@ -607,17 +550,8 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
-// 8. SERVER STARTUP & LISTEN
+// 8. SERVER LISTEN
 // ============================================================================
 app.listen(PORT, () => {
-    console.log(`
-  =============================================================
-  🛡️  HONEYSHIELD DEFENSE CONSOLE INITIALIZED SUCCESSFULLY
-  -------------------------------------------------------------
-  ► Server Port   : ${PORT}
-  ► Timezone      : Asia/Kolkata (IST)
-  ► Honeypot Traps: ${honeypotPaths.join(', ')}
-  ► Admin Login   : admin / adminpassword
-  =============================================================
-  `);
+    console.log(`🛡️ HoneyShield Server active on port ${PORT}`);
 });
