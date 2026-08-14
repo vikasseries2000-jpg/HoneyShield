@@ -94,7 +94,7 @@ function getFormattedISTTime() {
 function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
     ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
     const currentCount = ipAttackCounts[realIP];
-    const isBlocked = currentCount >= 3;
+    const isBlocked = currentCount >= 3 || blockedIPs.has(realIP);
     
     if (isBlocked) {
         blockedIPs.add(realIP);
@@ -179,7 +179,7 @@ function renderHTML(title, pageType, data = {}) {
                 background: rgba(239, 68, 68, 0.2);
                 border: 1px solid var(--accent-red);
                 color: var(--accent-red);
-                padding: 6px 14px;
+                padding: 8px 16px;
                 border-radius: 20px;
                 font-weight: 700;
                 font-size: 13px;
@@ -196,7 +196,6 @@ function renderHTML(title, pageType, data = {}) {
             .card-stat h4 { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
             .card-stat .val { font-size: 32px; font-weight: 800; margin-top: 8px; }
 
-            /* SPLIT LAYOUT: STATS/TABLE LEFT, PIE CHART RIGHT */
             .main-dashboard-grid {
                 display: grid;
                 grid-template-columns: 2fr 1fr;
@@ -215,7 +214,7 @@ function renderHTML(title, pageType, data = {}) {
             label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
             input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 18px; background: var(--bg-primary); border: 1px solid #334155; color: #fff; border-radius: 6px; outline: none; }
             
-            button { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 15px; }
+            button { padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 15px; }
 
             table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
             th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
@@ -225,6 +224,9 @@ function renderHTML(title, pageType, data = {}) {
             .badge-blocked { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
             .badge-logged { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
             
+            .btn-action-unblock { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; }
+            .btn-action-block { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; }
+
             code { font-family: monospace; color: #f43f5e; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; }
             .ip-highlight { color: var(--accent-yellow); font-weight: 700; }
             .payload-user { color: var(--accent-red); font-weight: 700; }
@@ -240,7 +242,7 @@ function renderHTML(title, pageType, data = {}) {
             <div class="logo">🛡️ HoneyShield Cyber Defense Console</div>
             ${data.user ? `
                 <div class="user-nav">
-                    <button id="sirenToggleBtn" class="btn-siren" onclick="toggleSirenAudio()">🔔 Enable Siren Sound</button>
+                    <button id="sirenToggleBtn" class="btn-siren">🔔 Enable Siren Sound</button>
                     <span>Logged as: <b>${escapeHTML(data.user)}</b></span>
                     <a href="/logout" class="btn-logout">Logout</a>
                 </div>
@@ -257,7 +259,7 @@ function renderHTML(title, pageType, data = {}) {
                         <input type="text" name="username" placeholder="Enter username" required autocomplete="off">
                         <label>Password</label>
                         <input type="password" name="password" placeholder="Enter password" required autocomplete="off">
-                        <button type="submit">Sign In</button>
+                        <button type="submit" style="width:100%;">Sign In</button>
                     </form>
                 </div>
             ` : ''}
@@ -298,10 +300,13 @@ function renderHTML(title, pageType, data = {}) {
                                     <th>Captured User</th>
                                     <th>Captured Pass</th>
                                     <th>Status</th>
+                                    <th>IP Action Toggle</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${threatLogs.map(log => `
+                                ${threatLogs.map(log => {
+                                    const isCurrentlyBlocked = blockedIPs.has(log.ip);
+                                    return `
                                     <tr>
                                         <td>${log.time}</td>
                                         <td><span class="ip-highlight">${escapeHTML(log.ip)}</span></td>
@@ -309,13 +314,19 @@ function renderHTML(title, pageType, data = {}) {
                                         <td><span class="payload-user">${escapeHTML(log.attemptedUser)}</span></td>
                                         <td><code>${escapeHTML(log.attemptedPass)}</code></td>
                                         <td>
-                                            <span class="${log.action === 'BLOCKED' ? 'badge-blocked' : 'badge-logged'}">
-                                                ${log.action} (${log.attackCount}/3)
+                                            <span class="${isCurrentlyBlocked ? 'badge-blocked' : 'badge-logged'}">
+                                                ${isCurrentlyBlocked ? 'BLOCKED' : 'LOGGED'} (${log.attackCount}/3)
                                             </span>
                                         </td>
+                                        <td>
+                                            <button class="${isCurrentlyBlocked ? 'btn-action-unblock' : 'btn-action-block'}" onclick="toggleIPBlock('${escapeHTML(log.ip)}')">
+                                                ${isCurrentlyBlocked ? '🔓 Unblock IP' : '🛑 Block IP'}
+                                            </button>
+                                        </td>
                                     </tr>
-                                `).join('')}
-                                ${threatLogs.length === 0 ? `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
+                                    `;
+                                }).join('')}
+                                ${threatLogs.length === 0 ? `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
                             </tbody>
                         </table>
                     </div>
@@ -332,6 +343,22 @@ function renderHTML(title, pageType, data = {}) {
                 </div>
 
                 <script>
+                    async function toggleIPBlock(ip) {
+                        try {
+                            const res = await fetch('/api/toggle-block', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ip })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                window.location.reload();
+                            }
+                        } catch (err) {
+                            console.error('IP Toggle error:', err);
+                        }
+                    }
+
                     document.addEventListener('DOMContentLoaded', () => {
                         const ctx = document.getElementById('attackPieChart').getContext('2d');
                         new Chart(ctx, {
@@ -411,6 +438,20 @@ app.get('/api/logs', (req, res) => {
         totalAttacks: threatLogs.length,
         honeypots: honeypotTrapsTriggered.total
     });
+});
+
+// ROUTE: Toggle specific IP block state
+app.post('/api/toggle-block', (req, res) => {
+    const { ip } = req.body;
+    if (!ip) return res.status(400).json({ error: 'IP required' });
+
+    if (blockedIPs.has(ip)) {
+        blockedIPs.delete(ip);
+        ipAttackCounts[ip] = 0;
+    } else {
+        blockedIPs.add(ip);
+    }
+    res.json({ success: true, isBlocked: blockedIPs.has(ip) });
 });
 
 app.get('/unblock-me', (req, res) => {
@@ -523,38 +564,6 @@ const SIREN_SCRIPT = `
         }
     }
 
-    function initSirenState() {
-        const active = localStorage.getItem('sirenEnabled') === 'true';
-        setSirenUIState(active);
-        if (active) {
-            if (!sirenAudioCtx) {
-                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume();
-            }
-        }
-    }
-
-    function toggleSirenAudio() {
-        const currentState = localStorage.getItem('sirenEnabled') === 'true';
-        const newState = !currentState;
-        localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
-        
-        if (newState) {
-            if (!sirenAudioCtx) {
-                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume();
-            }
-            setSirenUIState(true);
-            playSirenSound();
-        } else {
-            setSirenUIState(false);
-        }
-    }
-
     function playSirenSound() {
         if (localStorage.getItem('sirenEnabled') !== 'true') return;
         
@@ -590,8 +599,33 @@ const SIREN_SCRIPT = `
         }
     }
 
+    window.toggleSirenAudio = function() {
+        const currentState = localStorage.getItem('sirenEnabled') === 'true';
+        const newState = !currentState;
+        localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
+        
+        if (newState) {
+            if (!sirenAudioCtx) {
+                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (sirenAudioCtx.state === 'suspended') {
+                sirenAudioCtx.resume();
+            }
+            setSirenUIState(true);
+            playSirenSound();
+        } else {
+            setSirenUIState(false);
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
-        initSirenState();
+        const active = localStorage.getItem('sirenEnabled') === 'true';
+        setSirenUIState(active);
+
+        const btn = document.getElementById('sirenToggleBtn');
+        if (btn) {
+            btn.addEventListener('click', window.toggleSirenAudio);
+        }
     });
 
     setInterval(async () => {
