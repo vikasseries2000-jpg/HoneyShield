@@ -1,20 +1,20 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - PRODUCTION READY HONEYPOT ENGINE
+ * HONEYSHIELD DEFENSE CONSOLE - PRODUCTION READY HONEYPOT ENGINE (WITH CHART)
  * ============================================================================
- * Updates:
- *  - Removed hardcoded "Demo Account" password from Login Page
- *  - Captured Attacker Payload/Credentials clearly displayed in Admin Console
- *  - Web Audio API Dual-Frequency Siren on 3rd Attack/Block Event
+ * Features:
+ *  - Interactive Threat Analytics Chart (Chart.js Integration)
+ *  - Removed hardcoded passwords from Login Interface
+ *  - Captured Attacker Payload/Credentials in Admin Console
+ *  - Web Audio API Dual-Frequency Siren on 3rd Strike / Block
  *  - Real-Time IST Timezone Capture (Asia/Kolkata)
  *  - Multi-Vector Attack Classifier (SQLi, XSS, Brute Force, Directory Traversal)
- *  - Emergency IP Unblock Endpoint (/unblock-me)
+ *  - IP Reset & Unblock Route (/unblock-me)
  * ============================================================================
  */
 
 const express = require('express');
 const session = require('express-session');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -131,6 +131,23 @@ function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N
 // 4. UI HTML TEMPLATES GENERATOR
 // ============================================================================
 function renderHTML(title, pageType, data = {}) {
+    // Attack categories summary calculation for Chart
+    const attackCounts = {
+        'SQLi': 0,
+        'XSS': 0,
+        'Brute Force': 0,
+        'Honeypot Trap': 0,
+        'Others': 0
+    };
+
+    threatLogs.forEach(log => {
+        if (log.attackType.includes('SQL')) attackCounts['SQLi']++;
+        else if (log.attackType.includes('XSS')) attackCounts['XSS']++;
+        else if (log.attackType.includes('Brute')) attackCounts['Brute Force']++;
+        else if (log.attackType.includes('Honeypot')) attackCounts['Honeypot Trap']++;
+        else attackCounts['Others']++;
+    });
+
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -138,6 +155,8 @@ function renderHTML(title, pageType, data = {}) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>HoneyShield - ${title}</title>
+        <!-- Chart.js Library via CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
             :root {
                 --bg-primary: #0b1320;
@@ -204,6 +223,8 @@ function renderHTML(title, pageType, data = {}) {
             .top-actions { display: flex; gap: 10px; }
             .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); }
             .btn-sm:hover { background: #1e293b; }
+
+            .chart-container { position: relative; height: 260px; width: 100%; margin-top: 10px; }
         </style>
     </head>
     <body>
@@ -248,6 +269,16 @@ function renderHTML(title, pageType, data = {}) {
                     </div>
                 </div>
 
+                <!-- ATTACK VECTOR ANALYTICS CHART -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📊 Attack Vector Distribution (Live Chart)</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="attackChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">🚨 Real-Time Threat Intelligence Logs (IST Time)</div>
@@ -287,6 +318,48 @@ function renderHTML(title, pageType, data = {}) {
                         </tbody>
                     </table>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const ctx = document.getElementById('attackChart').getContext('2d');
+                        window.myAttackChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['SQL Injection', 'XSS', 'Brute Force', 'Honeypot Trap', 'Others'],
+                                datasets: [{
+                                    label: 'Attack Attempts',
+                                    data: [${attackCounts['SQLi']}, ${attackCounts['XSS']}, ${attackCounts['Brute Force']}, ${attackCounts['Honeypot Trap']}, ${attackCounts['Others']}],
+                                    backgroundColor: [
+                                        '#ef4444',
+                                        '#f59e0b',
+                                        '#38bdf8',
+                                        '#8b5cf6',
+                                        '#64748b'
+                                    ],
+                                    borderRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: { color: '#94a3b8', precision: 0 },
+                                        grid: { color: '#1e293b' }
+                                    },
+                                    x: {
+                                        ticks: { color: '#94a3b8' },
+                                        grid: { display: false }
+                                    }
+                                }
+                            }
+                        });
+                    });
+                </script>
             ` : ''}
 
             ${pageType === 'dashboard' ? `
