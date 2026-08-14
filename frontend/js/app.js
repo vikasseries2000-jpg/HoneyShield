@@ -750,3 +750,84 @@ function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N
     threatLogs.unshift(newLog);
     return isBlocked;
 }
+// ==========================================
+// OVERRIDE: WORKING SIREN AUDIO ALERT SYSTEM
+// ==========================================
+
+// Web Audio API ke sath custom loud alert sound generator
+const SIREN_SCRIPT_FIX = `
+<script>
+    // Global Audio Context & User Interaction Tracker
+    let sirenAudioCtx = null;
+    let sirenUnlocked = false;
+
+    function unlockAudio() {
+        if (!sirenAudioCtx) {
+            sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+            sirenAudioCtx.resume();
+        }
+        sirenUnlocked = true;
+        
+        const btn = document.getElementById('sirenBtn');
+        if (btn) {
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.color = '#10b981';
+            btn.style.border = '1px solid #10b981';
+            btn.innerText = '🔊 Siren Active & Ready';
+        }
+    }
+
+    // Window par kahin bhi 1st click hote hi audio enable hoga
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+
+    // Loud Police Siren Generator Sound Function
+    function playSirenSound() {
+        try {
+            if (!sirenAudioCtx) {
+                sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (sirenAudioCtx.state === 'suspended') {
+                sirenAudioCtx.resume();
+            }
+
+            const osc = sirenAudioCtx.createOscillator();
+            const gain = sirenAudioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            
+            // Frequency Sweep (Wailing Siren pitch)
+            const now = sirenAudioCtx.currentTime;
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.6);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.9);
+
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+
+            osc.connect(gain);
+            gain.connect(sirenAudioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 1.0);
+        } catch (e) {
+            console.log("Audio Playback Issue:", e);
+        }
+    }
+</script>
+`;
+
+// Middleware to inject Siren script automatically
+app.use((req, res, next) => {
+    const originalSend = res.send;
+    res.send = function (body) {
+        if (typeof body === 'string' && body.includes('HoneyShield Defense Console')) {
+            body = body.replace('</body>', `${SIREN_SCRIPT_FIX}</body>`);
+        }
+        return originalSend.call(this, body);
+    };
+    next();
+});
