@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - AUTO DYNAMIC LOGS & WORKING SIREN
+ * HONEYSHIELD DEFENSE CONSOLE - COMPACT PIE CHART & FIXED SIREN TOGGLE
  * ============================================================================
  */
 
@@ -10,6 +10,7 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable proxy trusting to correctly parse real client IPs on Render / Cloudflare
 app.set('trust proxy', true);
 
 // ============================================================================
@@ -131,9 +132,137 @@ function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N
 }
 
 // ============================================================================
-// 4. UI HTML TEMPLATES GENERATOR
+// 4. SIREN SCRIPT DEFINITION & INJECTION MIDDLEWARE
+// ============================================================================
+const SIREN_SCRIPT = `
+<script>
+    let sirenAudioCtx = null;
+    let lastLogCount = 0;
+
+    function getAudioContext() {
+        if (!sirenAudioCtx) {
+            sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+            sirenAudioCtx.resume();
+        }
+        return sirenAudioCtx;
+    }
+
+    function playSirenBeep() {
+        if (localStorage.getItem('sirenEnabled') !== 'true') return;
+        
+        try {
+            const ctx = getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sawtooth';
+            const now = ctx.currentTime;
+
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.6);
+
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.8);
+        } catch (e) {
+            console.error("Audio Play Error:", e);
+        }
+    }
+
+    function updateSirenUI(isEnabled) {
+        const btn = document.getElementById('sirenToggleBtn');
+        if (!btn) return;
+        
+        if (isEnabled) {
+            btn.classList.add('active');
+            btn.innerHTML = '🔊 Siren Sound Active';
+        } else {
+            btn.classList.remove('active');
+            btn.innerHTML = '🔔 Enable Siren Sound';
+        }
+    }
+
+    window.toggleSirenAudio = function() {
+        const isCurrentlyEnabled = localStorage.getItem('sirenEnabled') === 'true';
+        const newState = !isCurrentlyEnabled;
+        
+        localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
+        updateSirenUI(newState);
+
+        if (newState) {
+            getAudioContext();
+            playSirenBeep(); // Test sound on enable
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const isEnabled = localStorage.getItem('sirenEnabled') === 'true';
+        updateSirenUI(isEnabled);
+
+        // Global unlock on click
+        document.body.addEventListener('click', () => {
+            if (localStorage.getItem('sirenEnabled') === 'true') {
+                getAudioContext();
+            }
+        }, { once: true });
+    });
+
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/logs');
+            const data = await res.json();
+            
+            if (lastLogCount > 0 && data.logs.length > lastLogCount) {
+                playSirenBeep();
+                setTimeout(() => { window.location.reload(); }, 400);
+            }
+            lastLogCount = data.logs.length;
+        } catch (err) {
+            console.error("Polling error:", err);
+        }
+    }, 1500);
+</script>
+`;
+
+app.use((req, res, next) => {
+    const originalSend = res.send;
+    res.send = function (body) {
+        if (typeof body === 'string' && body.includes('HoneyShield Cyber Defense Console')) {
+            body = body.replace('</body>', `${SIREN_SCRIPT}</body>`);
+        }
+        return originalSend.call(this, body);
+    };
+    next();
+});
+
+// ============================================================================
+// 5. UI HTML TEMPLATES GENERATOR
 // ============================================================================
 function renderHTML(title, pageType, data = {}) {
+    const attackCounts = {
+        'SQLi': 0,
+        'XSS': 0,
+        'Brute Force': 0,
+        'Honeypot Trap': 0,
+        'Others': 0
+    };
+
+    threatLogs.forEach(log => {
+        if (log.attackType.includes('SQL')) attackCounts['SQLi']++;
+        else if (log.attackType.includes('XSS')) attackCounts['XSS']++;
+        else if (log.attackType.includes('Brute')) attackCounts['Brute Force']++;
+        else if (log.attackType.includes('Honeypot')) attackCounts['Honeypot Trap']++;
+        else attackCounts['Others']++;
+    });
+
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -252,7 +381,7 @@ function renderHTML(title, pageType, data = {}) {
             <div class="logo">🛡️ HoneyShield Cyber Defense Console</div>
             ${data.user ? `
                 <div class="user-nav">
-                    <button id="sirenToggleBtn" class="btn-siren">🔔 Enable Siren Sound</button>
+                    <button id="sirenToggleBtn" class="btn-siren" onclick="toggleSirenAudio()">🔔 Enable Siren Sound</button>
                     <span>Logged as: <b>${escapeHTML(data.user)}</b></span>
                     <a href="/logout" class="btn-logout">Logout</a>
                 </div>
@@ -278,20 +407,19 @@ function renderHTML(title, pageType, data = {}) {
                 <div class="grid-stats">
                     <div class="card-stat">
                         <h4>Total Threat Logged</h4>
-                        <div class="val" id="statTotalLogged" style="color: var(--accent-yellow);">0</div>
+                        <div class="val" style="color: var(--accent-yellow);">${threatLogs.length}</div>
                     </div>
                     <div class="card-stat">
                         <h4>Blocked Attacker IPs</h4>
-                        <div class="val" id="statBlockedIPs" style="color: var(--accent-red);">0</div>
+                        <div class="val" style="color: var(--accent-red);">${blockedIPs.size}</div>
                     </div>
                     <div class="card-stat">
                         <h4>Honeypot Traps Triggered</h4>
-                        <div class="val" id="statHoneypots" style="color: var(--accent-blue);">0</div>
+                        <div class="val" style="color: var(--accent-blue);">${honeypotTrapsTriggered.total}</div>
                     </div>
                 </div>
 
                 <div class="main-dashboard-grid">
-                    <!-- LEFT SIDE: REAL-TIME THREAT LOGS TABLE -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">🚨 Real-Time Threat Intelligence Logs (IST Time)</div>
@@ -313,13 +441,34 @@ function renderHTML(title, pageType, data = {}) {
                                     <th>IP Action Toggle</th>
                                 </tr>
                             </thead>
-                            <tbody id="logsTableBody">
-                                <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Loading live threat stream...</td></tr>
+                            <tbody>
+                                ${threatLogs.map(log => {
+                                    const isCurrentlyBlocked = blockedIPs.has(log.ip);
+                                    return `
+                                    <tr>
+                                        <td>${log.time}</td>
+                                        <td><span class="ip-highlight">${escapeHTML(log.ip)}</span></td>
+                                        <td>${escapeHTML(log.attackType)}</td>
+                                        <td><span class="payload-user">${escapeHTML(log.attemptedUser)}</span></td>
+                                        <td><code>${escapeHTML(log.attemptedPass)}</code></td>
+                                        <td>
+                                            <span class="${isCurrentlyBlocked ? 'badge-blocked' : 'badge-logged'}">
+                                                ${isCurrentlyBlocked ? 'BLOCKED' : 'LOGGED'} (${log.attackCount}/3)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="${isCurrentlyBlocked ? 'btn-action-unblock' : 'btn-action-block'}" onclick="toggleIPBlock('${escapeHTML(log.ip)}')">
+                                                ${isCurrentlyBlocked ? '🔓 Unblock IP' : '🛑 Block IP'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    `;
+                                }).join('')}
+                                ${threatLogs.length === 0 ? `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- RIGHT CORNER: COMPACT PIE CHART -->
                     <div class="card" style="display: flex; flex-direction: column; align-items: center;">
                         <div class="card-header" style="width: 100%;">
                             <div class="card-title">📊 Vectors Breakdown</div>
@@ -329,6 +478,50 @@ function renderHTML(title, pageType, data = {}) {
                         </div>
                     </div>
                 </div>
+
+                <script>
+                    async function toggleIPBlock(ip) {
+                        try {
+                            const res = await fetch('/api/toggle-block', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ip })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                window.location.reload();
+                            }
+                        } catch (err) {
+                            console.error('IP Toggle error:', err);
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const ctx = document.getElementById('attackPieChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: ['SQLi', 'XSS', 'Brute', 'Trap', 'Others'],
+                                datasets: [{
+                                    data: [${attackCounts['SQLi']}, ${attackCounts['XSS']}, ${attackCounts['Brute Force']}, ${attackCounts['Honeypot Trap']}, ${attackCounts['Others']}],
+                                    backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#8b5cf6', '#64748b'],
+                                    borderWidth: 2,
+                                    borderColor: '#131f37'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 }
+                                    }
+                                }
+                            }
+                        });
+                    });
+                </script>
             ` : ''}
 
             ${pageType === 'dashboard' ? `
@@ -344,7 +537,7 @@ function renderHTML(title, pageType, data = {}) {
 }
 
 // ============================================================================
-// 5. HONEYPOT TRAP ROUTES
+// 6. HONEYPOT TRAP ROUTES
 // ============================================================================
 const honeypotPaths = ['/wp-admin', '/phpmyadmin', '/.env', '/backup.sql', '/admin.php', '/api/v1/config'];
 
@@ -365,7 +558,7 @@ honeypotPaths.forEach(trapPath => {
 });
 
 // ============================================================================
-// 6. LOGIN & MANAGEMENT ROUTES
+// 7. LOGIN & MANAGEMENT ROUTES
 // ============================================================================
 
 app.get('/', (req, res) => {
@@ -380,8 +573,7 @@ app.get('/api/logs', (req, res) => {
         logs: threatLogs,
         blockedCount: blockedIPs.size,
         totalAttacks: threatLogs.length,
-        honeypots: honeypotTrapsTriggered.total,
-        blockedIPList: Array.from(blockedIPs)
+        honeypots: honeypotTrapsTriggered.total
     });
 });
 
@@ -482,224 +674,6 @@ app.get('/logout', (req, res) => {
         res.clearCookie('connect.sid');
         res.redirect('/');
     });
-});
-
-// ============================================================================
-// 7. REALTIME CLIENT ENGINE WITH WORKING SIREN & LIVE AUTO-UPDATE
-// ============================================================================
-const SIREN_SCRIPT = `
-<script>
-    let globalAudioCtx = null;
-    let lastKnownLogCount = -1;
-    let pieChartInstance = null;
-
-    function getAudioCtx() {
-        if (!globalAudioCtx) {
-            globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (globalAudioCtx.state === 'suspended') {
-            globalAudioCtx.resume();
-        }
-        return globalAudioCtx;
-    }
-
-    function soundAlarm() {
-        if (localStorage.getItem('sirenEnabled') !== 'true') return;
-        try {
-            const ctx = getAudioCtx();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = 'sawtooth';
-            const now = ctx.currentTime;
-
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.linearRampToValueAtTime(1300, now + 0.3);
-            osc.frequency.linearRampToValueAtTime(500, now + 0.6);
-            osc.frequency.linearRampToValueAtTime(1300, now + 0.9);
-
-            gain.gain.setValueAtTime(0.8, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 1.2);
-        } catch (err) {
-            console.error("Audio error:", err);
-        }
-    }
-
-    function updateSirenButtonUI() {
-        const btn = document.getElementById('sirenToggleBtn');
-        if (!btn) return;
-        const isEnabled = localStorage.getItem('sirenEnabled') === 'true';
-
-        if (isEnabled) {
-            btn.classList.add('active');
-            btn.innerHTML = '🔊 Siren Sound Active';
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = '🔔 Enable Siren Sound';
-        }
-    }
-
-    async function toggleIPBlock(ip) {
-        try {
-            const res = await fetch('/api/toggle-block', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ip })
-            });
-            const data = await res.json();
-            if (data.success) {
-                fetchLatestLogs();
-            }
-        } catch (err) {
-            console.error("Toggle IP Error:", err);
-        }
-    }
-
-    function updatePieChart(counts) {
-        const ctx = document.getElementById('attackPieChart');
-        if (!ctx) return;
-
-        if (pieChartInstance) {
-            pieChartInstance.data.datasets[0].data = [counts.sqli, counts.xss, counts.brute, counts.trap, counts.others];
-            pieChartInstance.update();
-        } else {
-            pieChartInstance = new Chart(ctx.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: ['SQLi', 'XSS', 'Brute', 'Trap', 'Others'],
-                    datasets: [{
-                        data: [counts.sqli, counts.xss, counts.brute, counts.trap, counts.others],
-                        backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#8b5cf6', '#64748b'],
-                        borderWidth: 2,
-                        borderColor: '#131f37'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10 }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    async function fetchLatestLogs() {
-        try {
-            const res = await fetch('/api/logs');
-            const data = await res.json();
-
-            // Stats update
-            const statTotalLogged = document.getElementById('statTotalLogged');
-            const statBlockedIPs = document.getElementById('statBlockedIPs');
-            const statHoneypots = document.getElementById('statHoneypots');
-
-            if (statTotalLogged) statTotalLogged.innerText = data.totalAttacks;
-            if (statBlockedIPs) statBlockedIPs.innerText = data.blockedCount;
-            if (statHoneypots) statHoneypots.innerText = data.honeypots;
-
-            // Attack counts for pie chart
-            const counts = { sqli: 0, xss: 0, brute: 0, trap: 0, others: 0 };
-
-            // Table update
-            const tbody = document.getElementById('logsTableBody');
-            if (tbody) {
-                if (data.logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>';
-                } else {
-                    let html = '';
-                    data.logs.forEach(log => {
-                        if (log.attackType.includes('SQL')) counts.sqli++;
-                        else if (log.attackType.includes('XSS')) counts.xss++;
-                        else if (log.attackType.includes('Brute')) counts.brute++;
-                        else if (log.attackType.includes('Honeypot')) counts.trap++;
-                        else counts.others++;
-
-                        const isCurrentlyBlocked = data.blockedIPList.includes(log.ip);
-
-                        html += \`
-                        <tr>
-                            <td>\${log.time}</td>
-                            <td><span class="ip-highlight">\${log.ip}</span></td>
-                            <td>\${log.attackType}</td>
-                            <td><span class="payload-user">\${log.attemptedUser}</span></td>
-                            <td><code>\${log.attemptedPass}</code></td>
-                            <td>
-                                <span class="\${isCurrentlyBlocked ? 'badge-blocked' : 'badge-logged'}">
-                                    \${isCurrentlyBlocked ? 'BLOCKED' : 'LOGGED'} (\${log.attackCount}/3)
-                                </span>
-                            </td>
-                            <td>
-                                <button class="\${isCurrentlyBlocked ? 'btn-action-unblock' : 'btn-action-block'}" onclick="toggleIPBlock('\${log.ip}')">
-                                    \${isCurrentlyBlocked ? '🔓 Unblock IP' : '🛑 Block IP'}
-                                </button>
-                            </td>
-                        </tr>\`;
-                    });
-                    tbody.innerHTML = html;
-                }
-            }
-
-            updatePieChart(counts);
-
-            // Trigger alarm if new log detected
-            if (lastKnownLogCount !== -1 && data.logs.length > lastKnownLogCount) {
-                soundAlarm();
-            }
-            lastKnownLogCount = data.logs.length;
-
-        } catch (err) {
-            console.error("Live fetch error:", err);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        updateSirenButtonUI();
-
-        const sirenBtn = document.getElementById('sirenToggleBtn');
-        if (sirenBtn) {
-            sirenBtn.addEventListener('click', () => {
-                const currentState = localStorage.getItem('sirenEnabled') === 'true';
-                const newState = !currentState;
-                localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
-                updateSirenButtonUI();
-                
-                if (newState) {
-                    getAudioCtx();
-                    soundAlarm(); // Play sample siren sound
-                }
-            });
-        }
-
-        document.body.addEventListener('click', () => {
-            getAudioCtx();
-        }, { once: true });
-
-        fetchLatestLogs();
-        setInterval(fetchLatestLogs, 1000); // Poll every 1 sec
-    });
-</script>
-`;
-
-app.use((req, res, next) => {
-    const originalSend = res.send;
-    res.send = function (body) {
-        if (typeof body === 'string' && body.includes('HoneyShield Cyber Defense Console')) {
-            body = body.replace('</body>', `${SIREN_SCRIPT}</body>`);
-        }
-        return originalSend.call(this, body);
-    };
-    next();
 });
 
 // ============================================================================
