@@ -713,3 +713,40 @@ app.get('/logout', (req, res) => {
 app.listen(PORT, () => {
     console.log(` HoneyShield Server running on http://localhost:${PORT}`);
 });
+// ==========================================
+// OVERRIDE: IST TIMEZONE FIX FOR RENDER
+// ==========================================
+
+// Old registerAttack ko IST timezone support ke saath override karein
+function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
+    ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
+    const isBlocked = ipAttackCounts[realIP] >= 3;
+    
+    if (isBlocked) {
+        blockedIPs.add(realIP);
+    }
+
+    // India Time (IST) Format Output
+    const istTime = new Date().toLocaleTimeString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+    });
+
+    const newLog = {
+        time: istTime, // Localized IST Time
+        ip: realIP,
+        route: route,
+        attackType: attackType,
+        attemptedUser: attemptedUser,
+        attemptedPass: attemptedPass,
+        action: isBlocked ? 'BLOCKED' : 'LOGGED',
+        userAgent: userAgent || 'Unknown',
+        isNewBlock: isBlocked
+    };
+
+    threatLogs.unshift(newLog);
+    return isBlocked;
+}
