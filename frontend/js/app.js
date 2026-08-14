@@ -648,15 +648,68 @@ app.get('/logout', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(` HoneyShield Defense Server running on http://localhost:${PORT}`);
 });
-// ==========================================
-// OVERRIDE: CAPTURE ATTACKER USERNAME & PASSWORD
-// ==========================================
+// ====================================================================
+// HONEYSHIELD COMPLETE OVERRIDE (IST Time, Captured Inputs, Siren & Emergency Unblock)
+// ====================================================================
 
+// 1. Emergency Route to Unblock All IPs Instantly
+app.get('/unblock-me', (req, res) => {
+    const clientIP = getClientIP(req);
+    
+    blockedIPs.clear();
+    for (let ip in ipAttackCounts) {
+        ipAttackCounts[ip] = 0;
+    }
+
+    res.send(`
+        <div style="background:#0b1320; color:#10b981; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
+            <h1>✅ ALL IPs UNBLOCKED SUCCESSFULLY!</h1>
+            <p style="color:#e2e8f0;">Your IP <b>${clientIP}</b> and all other blocked IPs have been cleared.</p>
+            <a href="/" style="color:#38bdf8; margin-top:15px; font-weight:bold; text-decoration:none;">Go Back to Login Page</a>
+        </div>
+    `);
+});
+
+// 2. Updated registerAttack Function (IST Timezone + Credential Capture)
+function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
+    ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
+    const isBlocked = ipAttackCounts[realIP] >= 3;
+    
+    if (isBlocked) {
+        blockedIPs.add(realIP);
+    }
+
+    // India Standard Time (IST - Asia/Kolkata)
+    const istTime = new Date().toLocaleTimeString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+    });
+
+    const newLog = {
+        time: istTime,
+        ip: realIP,
+        route: route,
+        attackType: attackType,
+        attemptedUser: attemptedUser,
+        attemptedPass: attemptedPass,
+        action: isBlocked ? 'BLOCKED' : 'LOGGED',
+        userAgent: userAgent || 'Unknown',
+        isNewBlock: isBlocked
+    };
+
+    threatLogs.unshift(newLog);
+    return isBlocked;
+}
+
+// 3. Updated /login Route Handler
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     const clientIP = getClientIP(req);
 
-    // 1. IP Block Check
+    // IP Block Check
     if (blockedIPs.has(clientIP)) {
         return res.status(403).send(`
             <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
@@ -666,7 +719,7 @@ app.post('/login', (req, res) => {
         `);
     }
 
-    // 2. SQL Injection / Payload Detection
+    // Malicious Pattern Detection
     const attackPattern = /(\'|\"|\-\-|\b(OR|AND|SELECT|INSERT|DELETE|DROP)\b|<script>)/i;
     let detectedType = 'Brute Force / Bad Credentials';
 
@@ -674,14 +727,14 @@ app.post('/login', (req, res) => {
         detectedType = 'SQL Injection / Malicious Payload';
     }
 
-    // 3. Valid Credentials Check (admin -> adminpassword)
+    // Valid Credentials Check (admin -> adminpassword)
     if (USERS_DB[username] && USERS_DB[username].password === password) {
         req.session.user = username;
         req.session.role = USERS_DB[username].role;
         return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
     } 
 
-    // 4. Register Attack with Captured Username & Password
+    // Register Attack with captured credentials
     const isBlocked = registerAttack(clientIP, '/login', detectedType, req.get('User-Agent'), username, password);
     const fakeIP = generateFakeAttackerIP();
 
@@ -701,65 +754,10 @@ app.post('/login', (req, res) => {
     }));
 });
 
-// Missing Logout Route
-app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.clearCookie('connect.sid');
-        res.redirect('/');
-    });
-});
-
-// App Listener
-app.listen(PORT, () => {
-    console.log(` HoneyShield Server running on http://localhost:${PORT}`);
-});
-// ==========================================
-// OVERRIDE: IST TIMEZONE FIX FOR RENDER
-// ==========================================
-
-// Old registerAttack ko IST timezone support ke saath override karein
-function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
-    ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
-    const isBlocked = ipAttackCounts[realIP] >= 3;
-    
-    if (isBlocked) {
-        blockedIPs.add(realIP);
-    }
-
-    // India Time (IST) Format Output
-    const istTime = new Date().toLocaleTimeString('en-IN', { 
-        timeZone: 'Asia/Kolkata',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true 
-    });
-
-    const newLog = {
-        time: istTime, // Localized IST Time
-        ip: realIP,
-        route: route,
-        attackType: attackType,
-        attemptedUser: attemptedUser,
-        attemptedPass: attemptedPass,
-        action: isBlocked ? 'BLOCKED' : 'LOGGED',
-        userAgent: userAgent || 'Unknown',
-        isNewBlock: isBlocked
-    };
-
-    threatLogs.unshift(newLog);
-    return isBlocked;
-}
-// ==========================================
-// OVERRIDE: WORKING SIREN AUDIO ALERT SYSTEM
-// ==========================================
-
-// Web Audio API ke sath custom loud alert sound generator
+// 4. Web Audio API Loud Police Siren Script Injection
 const SIREN_SCRIPT_FIX = `
 <script>
-    // Global Audio Context & User Interaction Tracker
     let sirenAudioCtx = null;
-    let sirenUnlocked = false;
 
     function unlockAudio() {
         if (!sirenAudioCtx) {
@@ -768,22 +766,19 @@ const SIREN_SCRIPT_FIX = `
         if (sirenAudioCtx.state === 'suspended') {
             sirenAudioCtx.resume();
         }
-        sirenUnlocked = true;
         
         const btn = document.getElementById('sirenBtn');
         if (btn) {
             btn.style.background = 'rgba(16, 185, 129, 0.2)';
             btn.style.color = '#10b981';
             btn.style.border = '1px solid #10b981';
-            btn.innerText = '🔊 Siren Active & Ready';
+            btn.innerText = '🔊 Siren System Ready';
         }
     }
 
-    // Window par kahin bhi 1st click hote hi audio enable hoga
     window.addEventListener('click', unlockAudio);
     window.addEventListener('keydown', unlockAudio);
 
-    // Loud Police Siren Generator Sound Function
     function playSirenSound() {
         try {
             if (!sirenAudioCtx) {
@@ -798,7 +793,6 @@ const SIREN_SCRIPT_FIX = `
 
             osc.type = 'sawtooth';
             
-            // Frequency Sweep (Wailing Siren pitch)
             const now = sirenAudioCtx.currentTime;
             osc.frequency.setValueAtTime(600, now);
             osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
@@ -820,7 +814,7 @@ const SIREN_SCRIPT_FIX = `
 </script>
 `;
 
-// Middleware to inject Siren script automatically
+// Inject Siren script into Admin Console
 app.use((req, res, next) => {
     const originalSend = res.send;
     res.send = function (body) {
@@ -830,4 +824,16 @@ app.use((req, res, next) => {
         return originalSend.call(this, body);
     };
     next();
+});
+
+// 5. Logout & Server Listener
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(` HoneyShield Defense Server running on port ${PORT}`);
 });
