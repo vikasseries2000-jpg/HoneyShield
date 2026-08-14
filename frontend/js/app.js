@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - PIE CHART & EXPLICIT SIREN BUTTON
+ * HONEYSHIELD DEFENSE CONSOLE - ENHANCED REAL IP & AUDIBLE SIREN
  * ============================================================================
  */
 
@@ -9,6 +9,9 @@ const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Enable proxy trusting to correctly parse real client IPs behind proxies/Nginx/Cloudflare
+app.set('trust proxy', true);
 
 // ============================================================================
 // 1. CORE MIDDLEWARE & CONFIGURATION
@@ -44,15 +47,28 @@ const honeypotTrapsTriggered = { total: 0 };
 // ============================================================================
 
 function getClientIP(req) {
+    // 1. Check custom proxy headers
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    if (xForwardedFor) {
+        const ips = xForwardedFor.split(',');
+        return ips[0].trim();
+    }
+
     const cfIP = req.headers['cf-connecting-ip'];
     if (cfIP) return cfIP;
 
-    const xForwardedFor = req.headers['x-forwarded-for'];
-    if (xForwardedFor) {
-        return xForwardedFor.split(',')[0].trim();
+    const realIP = req.headers['x-real-ip'];
+    if (realIP) return realIP;
+
+    // 2. Fallback to express req.ip or socket
+    let ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    if (ip.includes('::ffff:')) {
+        ip = ip.replace('::ffff:', '');
     }
-    
-    return req.socket.remoteAddress || req.ip || '127.0.0.1';
+    if (ip === '::1') {
+        ip = '127.0.0.1';
+    }
+    return ip;
 }
 
 function escapeHTML(str) {
@@ -440,7 +456,6 @@ app.get('/api/logs', (req, res) => {
     });
 });
 
-// ROUTE: Toggle specific IP block state
 app.post('/api/toggle-block', (req, res) => {
     const { ip } = req.body;
     if (!ip) return res.status(400).json({ error: 'IP required' });
@@ -566,44 +581,50 @@ const SIREN_SCRIPT = `
 
     function playSirenSound() {
         if (localStorage.getItem('sirenEnabled') !== 'true') return;
-        
+
         try {
             if (!sirenAudioCtx) {
                 sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            
             if (sirenAudioCtx.state === 'suspended') {
-                sirenAudioCtx.resume();
+                sirenAudioCtx.resume().then(() => triggerOscillator());
+            } else {
+                triggerOscillator();
             }
-
-            const osc = sirenAudioCtx.createOscillator();
-            const gain = sirenAudioCtx.createGain();
-
-            osc.type = 'sawtooth';
-            const now = sirenAudioCtx.currentTime;
-
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
-            osc.frequency.linearRampToValueAtTime(500, now + 0.6);
-            osc.frequency.linearRampToValueAtTime(1200, now + 0.9);
-
-            gain.gain.setValueAtTime(0.9, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-
-            osc.connect(gain);
-            gain.connect(sirenAudioCtx.destination);
-
-            osc.start(now);
-            osc.stop(now + 1.2);
         } catch (e) {
             console.error("Audio Siren Error:", e);
         }
+    }
+
+    function triggerOscillator() {
+        if (!sirenAudioCtx) return;
+        const osc = sirenAudioCtx.createOscillator();
+        const gain = sirenAudioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        const now = sirenAudioCtx.currentTime;
+
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
+        osc.frequency.linearRampToValueAtTime(500, now + 0.6);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.9);
+
+        gain.gain.setValueAtTime(0.9, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+        osc.connect(gain);
+        gain.connect(sirenAudioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 1.2);
     }
 
     window.toggleSirenAudio = function() {
         const currentState = localStorage.getItem('sirenEnabled') === 'true';
         const newState = !currentState;
         localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
-        
+
         if (newState) {
             if (!sirenAudioCtx) {
                 sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -626,6 +647,15 @@ const SIREN_SCRIPT = `
         if (btn) {
             btn.addEventListener('click', window.toggleSirenAudio);
         }
+
+        // Global User-Interaction audio context unblocker
+        const unlockAudio = () => {
+            if (sirenAudioCtx && sirenAudioCtx.state === 'suspended') {
+                sirenAudioCtx.resume();
+            }
+            document.removeEventListener('click', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
     });
 
     setInterval(async () => {
@@ -634,13 +664,8 @@ const SIREN_SCRIPT = `
             const data = await res.json();
             
             if (lastLogCount > 0 && data.logs.length > lastLogCount) {
-                const latestLog = data.logs[0];
-                
-                if (latestLog.attackCount >= 3 || latestLog.action === 'BLOCKED' || latestLog.isNewBlock) {
-                    playSirenSound();
-                }
-
-                setTimeout(() => { window.location.reload(); }, 300);
+                playSirenSound();
+                setTimeout(() => { window.location.reload(); }, 500);
             }
             lastLogCount = data.logs.length;
         } catch (err) {
