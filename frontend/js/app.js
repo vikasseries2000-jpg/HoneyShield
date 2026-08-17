@@ -8,7 +8,7 @@ const supabase = (typeof window !== 'undefined' && window.supabase)
 let attackChartInstance = null;
 let audioCtx = null;
 
-// 🔊 Beep Sound Function (Works across all browsers)
+// 🔊 Beep Sound Function
 function playBeepSound(times = 1) {
     try {
         if (!audioCtx) {
@@ -25,17 +25,17 @@ function playBeepSound(times = 1) {
                 const gain = audioCtx.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Sound Frequency
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
                 oscillator.connect(gain);
                 gain.connect(audioCtx.destination);
 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.15); // Beep Duration
+                oscillator.stop(audioCtx.currentTime + 0.15);
             }, delay);
 
-            delay += 300; // Gap between beeps
+            delay += 300;
         }
     } catch (e) {
         console.log("Audio Error:", e);
@@ -72,7 +72,7 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// 📊 Render Pie Chart Graph
+// 📊 Pie Chart
 function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -102,7 +102,6 @@ function renderPieChart(sqli, xss, brute) {
     });
 }
 
-// Load Dashboard Data
 async function loadDashboard() {
     if (!supabase) return;
 
@@ -167,18 +166,28 @@ async function toggleBlock(ip) {
     loadDashboard();
 }
 
-// Login Logic & Threat Alert Trigger
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const ip = await fetchClientIP();
-            const blockedSet = await getBlockedIPsSet();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             const statusMsg = document.getElementById('status-message');
 
+            // 1. Check Correct Credentials FIRST
+            if (username === 'admin' && password === 'admin123') {
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            // 2. Fetch IP and Check Block Status for Failed Attempts
+            const ip = await fetchClientIP();
+            const blockedSet = await getBlockedIPsSet();
+
             if (blockedSet.has(ip)) {
-                playBeepSound(3); // 🚨 Already Blocked -> 3 Beeps
+                playBeepSound(3);
                 statusMsg.style.display = 'block';
                 statusMsg.style.background = '#7f1d1d';
                 statusMsg.style.color = '#fca5a5';
@@ -186,16 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            // Correct Login
-            if (username === 'admin' && password === 'admin123') {
-                window.location.href = '/dashboard';
-                return;
-            }
-
-            // Threat Analysis
+            // 3. Classify Attack Type
             let attackType = 'Brute Force / Bad Credentials';
             if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
                 attackType = 'SQL Injection (SQLi)';
@@ -218,11 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 created_at: new Date().toISOString()
             }]);
 
-            // 🚨 Trigger Sound Logic
+            // 4. Trigger Audio Alert
             if (isBlocked) {
-                playBeepSound(3); // 3 Attempts crosses -> 3 Beeps
+                playBeepSound(3); // 3 Beeps on auto-block
             } else {
-                playBeepSound(1); // 1 Attempt -> 1 Beep
+                playBeepSound(1); // 1 Beep on failed attempt
             }
 
             statusMsg.style.display = 'block';
