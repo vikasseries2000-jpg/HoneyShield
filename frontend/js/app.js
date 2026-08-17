@@ -2,22 +2,23 @@
 const SUPABASE_URL = "https://tvhuflxhzaulpoojdfeu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMzk1MTgsImV4cCI6MjA1NjkxNTUxOH0.K267fLlsg_zY5zMvS9PZzXjDLOqC1L5U2K3M0aM_u_k";
 
-// Replace line 5 with this safe initialization:
+// Safe initialization for Browser/Node compatibility
 const supabase = (typeof window !== 'undefined' && window.supabase) 
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
     : null;
+
 // Audio Alert System
 let audioCtx = null;
 let sirenActive = true;
 
 function initAudio() {
-    if (!audioCtx) {
+    if (!audioCtx && typeof window !== 'undefined') {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 }
 
 function playSiren() {
-    if (!sirenActive) return;
+    if (!sirenActive || !audioCtx) return;
     initAudio();
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -51,6 +52,7 @@ async function fetchClientIP() {
 
 // Database Helper Functions
 async function getBlockedIPsSet() {
+    if (!supabase) return new Set();
     try {
         const { data, error } = await supabase.from('blocked_ips').select('ip');
         if (error) {
@@ -65,6 +67,7 @@ async function getBlockedIPsSet() {
 }
 
 async function getIPAttackCount(ip) {
+    if (!supabase) return 0;
     try {
         const { data, error } = await supabase
             .from('threat_logs')
@@ -82,8 +85,10 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// Register Threat & Auto-Block
+// Register Threat & Auto-Block Logic
 async function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
+    if (!supabase) return { currentCount: 0, isBlocked: false };
+
     const currentCount = (await getIPAttackCount(realIP)) + 1;
     const existingBlocked = await getBlockedIPsSet();
     const isBlocked = currentCount >= 3 || existingBlocked.has(realIP);
@@ -113,6 +118,7 @@ async function registerAttack(realIP, route, attackType, userAgent, attemptedUse
 
 // Manual IP Action Handlers
 async function toggleBlockIP(ip) {
+    if (!supabase) return;
     const blocked = await getBlockedIPsSet();
     if (blocked.has(ip)) {
         const { error } = await supabase.from('blocked_ips').delete().eq('ip', ip);
@@ -125,13 +131,53 @@ async function toggleBlockIP(ip) {
 }
 
 async function unblockAllIPs() {
+    if (!supabase) return;
     const { error } = await supabase.from('blocked_ips').delete().neq('ip', '0.0.0.0');
     if (error) console.error('Error clearing blocked IPs:', error);
     loadDashboard();
 }
 
+// Chart.js Pie Chart Rendering Helper
+let attackChartInstance = null;
+
+function updateAttackChart(sqli, xss, brute) {
+    const canvas = document.getElementById('attackChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (attackChartInstance) {
+        attackChartInstance.destroy();
+    }
+
+    attackChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['SQLi', 'XSS', 'Brute Force'],
+            datasets: [{
+                data: [sqli, xss, brute],
+                backgroundColor: ['#e53e3e', '#ecc94b', '#3182ce'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#a0aec0', font: { size: 12 } }
+                }
+            }
+        }
+    });
+}
+
 // Dashboard UI Rendering
 async function loadDashboard() {
+    if (!supabase) return;
+    
     const blockedSet = await getBlockedIPsSet();
     
     const { data: logs, error } = await supabase
@@ -154,7 +200,21 @@ async function loadDashboard() {
     if (totalThreatsEl) totalThreatsEl.innerText = totalThreats;
     if (blockedIpsEl) blockedIpsEl.innerText = blockedCount;
 
-    // Render Table
+    // Categorize Vector Attack Breakdown for Graph
+    let sqliCount = 0;
+    let xssCount = 0;
+    let bruteCount = 0;
+
+    logs.forEach(log => {
+        const type = (log.threat_type || '').toLowerCase();
+        if (type.includes('sqli') || type.includes('sql')) sqliCount++;
+        else if (type.includes('xss')) xssCount++;
+        else bruteCount++;
+    });
+
+    updateAttackChart(sqliCount, xssCount, bruteCount);
+
+    // Render Table Body
     const tableBody = document.getElementById('logs-table-body');
     if (!tableBody) return;
     
@@ -242,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Toggle Siren Sound
+    // Toggle Siren Sound Button
     const sirenBtn = document.getElementById('toggle-siren');
     if (sirenBtn) {
         sirenBtn.addEventListener('click', () => {
@@ -251,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Auto-refresh Dashboard every 5 seconds if on Dashboard page
+    // Auto-refresh Dashboard if on Dashboard Page
     if (document.getElementById('logs-table-body')) {
         loadDashboard();
         setInterval(loadDashboard, 5000);
