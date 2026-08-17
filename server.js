@@ -3,12 +3,22 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Serve static frontend files
+// Static files serve karein
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Express v5 compatible fallback route using RegExp literal
-app.get(/(.*)/, (req, res) => {
+// Direct Open Login Page at '/'
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
+});
+
+// Explicit Route for Dashboard
+app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
+
+// Express v5 compatible fallback route
+app.get(/(.*)/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
 
 app.listen(PORT, () => {
