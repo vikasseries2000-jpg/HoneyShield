@@ -8,7 +8,7 @@ const supabase = (typeof window !== 'undefined' && window.supabase)
 let attackChartInstance = null;
 let audioCtx = null;
 
-// 🔊 Beep Sound Function
+// 🔊 Beep Sound
 function playBeepSound(times = 1) {
     try {
         if (!audioCtx) {
@@ -72,7 +72,7 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// 📊 Pie Chart
+// 📊 Render Pie Chart
 function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -102,6 +102,7 @@ function renderPieChart(sqli, xss, brute) {
     });
 }
 
+// Load Dashboard Data
 async function loadDashboard() {
     if (!supabase) return;
 
@@ -166,6 +167,7 @@ async function toggleBlock(ip) {
     loadDashboard();
 }
 
+// Form Handling
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -176,13 +178,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('password').value.trim();
             const statusMsg = document.getElementById('status-message');
 
-            // 1. Check Correct Credentials FIRST
+            // 1. Correct Credentials -> Redirect directly to Dashboard
             if (username === 'admin' && password === 'admin123') {
-                window.location.href = '/dashboard';
+                window.location.href = '/index.html';
                 return;
             }
 
-            // 2. Fetch IP and Check Block Status for Failed Attempts
+            // 2. IP Blocking & Attack Logging logic
             const ip = await fetchClientIP();
             const blockedSet = await getBlockedIPsSet();
 
@@ -195,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 3. Classify Attack Type
             let attackType = 'Brute Force / Bad Credentials';
             if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
                 attackType = 'SQL Injection (SQLi)';
@@ -218,11 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 created_at: new Date().toISOString()
             }]);
 
-            // 4. Trigger Audio Alert
             if (isBlocked) {
-                playBeepSound(3); // 3 Beeps on auto-block
+                playBeepSound(3);
             } else {
-                playBeepSound(1); // 1 Beep on failed attempt
+                playBeepSound(1);
             }
 
             statusMsg.style.display = 'block';

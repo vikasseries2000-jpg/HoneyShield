@@ -5,21 +5,16 @@ const PORT = process.env.PORT || 10000;
 
 app.use(express.json());
 
-// 1. Open Login Portal by default
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
-});
-
-// 2. Open Dashboard Portal
+// 1. Dashboard Page Route
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// Serve static assets (CSS, JS, Images)
+// 2. Serve static files (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// 3. Fallback Route (Safe for Express/Node)
-app.use((req, res) => {
+// 3. Default Root & Fallback Route -> Login Page
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
 
