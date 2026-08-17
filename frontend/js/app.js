@@ -6,33 +6,39 @@ const supabase = (typeof window !== 'undefined' && window.supabase)
     : null;
 
 let attackChartInstance = null;
+let audioCtx = null;
 
-// 🔊 Function to play Beep Sound (Bina external file ke sound play karta hai)
+// 🔊 Beep Sound Function (Works across all browsers)
 function playBeepSound(times = 1) {
     try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let delay = 0;
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
 
+        let delay = 0;
         for (let i = 0; i < times; i++) {
             setTimeout(() => {
                 const oscillator = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Sound Frequency (Hz)
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Sound Frequency
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
                 oscillator.connect(gain);
                 gain.connect(audioCtx.destination);
 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.15); // Beep duration
+                oscillator.stop(audioCtx.currentTime + 0.15); // Beep Duration
             }, delay);
 
-            delay += 300; // Har beep ke beech ka gap (milliseconds)
+            delay += 300; // Gap between beeps
         }
     } catch (e) {
-        console.log("Audio play error:", e);
+        console.log("Audio Error:", e);
     }
 }
 
@@ -66,7 +72,7 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// Render Pie Chart
+// 📊 Render Pie Chart Graph
 function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -79,7 +85,7 @@ function renderPieChart(sqli, xss, brute) {
     attackChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: total > 0 ? ['SQLi Attack', 'XSS Attack', 'Brute Force / Invalid Pass'] : ['No Attacks Yet'],
+            labels: total > 0 ? ['SQLi Attack', 'XSS Attack', 'Brute Force / Bad Pass'] : ['No Attacks Yet'],
             datasets: [{
                 data: total > 0 ? [sqli, xss, brute] : [1],
                 backgroundColor: total > 0 ? ['#ef4444', '#eab308', '#38bdf8'] : ['#334155'],
@@ -115,7 +121,6 @@ async function loadDashboard() {
         blockedContainer.innerHTML = Array.from(blockedSet).map(ip => `<span style="background:#7f1d1d; color:#fca5a5; padding:3px 8px; border-radius:4px; margin-right:5px; font-family:monospace;">${ip}</span>`).join('');
     }
 
-    // Pie Chart Breakdown
     let sqli = 0, xss = 0, brute = 0;
     logs.forEach(log => {
         const type = (log.threat_type || '').toLowerCase();
@@ -162,7 +167,7 @@ async function toggleBlock(ip) {
     loadDashboard();
 }
 
-// Login Logic & Threat Detection
+// Login Logic & Threat Alert Trigger
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -173,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusMsg = document.getElementById('status-message');
 
             if (blockedSet.has(ip)) {
-                playBeepSound(3); // 🚨 Already blocked - 3 Beeps
+                playBeepSound(3); // 🚨 Already Blocked -> 3 Beeps
                 statusMsg.style.display = 'block';
                 statusMsg.style.background = '#7f1d1d';
                 statusMsg.style.color = '#fca5a5';
@@ -184,13 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            // Correct Credentials
+            // Correct Login
             if (username === 'admin' && password === 'admin123') {
                 window.location.href = '/dashboard';
                 return;
             }
 
-            // Threat Classification
+            // Threat Analysis
             let attackType = 'Brute Force / Bad Credentials';
             if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
                 attackType = 'SQL Injection (SQLi)';
@@ -213,11 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 created_at: new Date().toISOString()
             }]);
 
-            // 🔊 Sound Logic:
+            // 🚨 Trigger Sound Logic
             if (isBlocked) {
-                playBeepSound(3); // 🛑 3 Tries Exceed hone par 3 baar Beep sound bajega
+                playBeepSound(3); // 3 Attempts crosses -> 3 Beeps
             } else {
-                playBeepSound(1); // ⚠️ Single invalid attempt par 1 baar Beep sound bajega
+                playBeepSound(1); // 1 Attempt -> 1 Beep
             }
 
             statusMsg.style.display = 'block';
