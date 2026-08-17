@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 // SUPABASE DATABASE CONNECTION
 // ============================================================================
 // Paste your copied Project URL and Anon Public Key here or set in Env Variables
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tvhuflxhzaulpoojdfeu.supabase.co/rest/v1/';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tvhuflxhzaulpoojdfeu.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQ4MzMsImV4cCI6MjEwMjUyMDgzM30.NK4jAU9UX51VkV6pCTnTUGKrFWE58X10TUJnS9SrG-o';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
