@@ -6,7 +6,8 @@ const PORT = process.env.PORT || 10000;
 // Frontend static files serve karein
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-app.get('*', (req, res) => {
+// Express v5 compatible fallback route
+app.get('(.*)', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
