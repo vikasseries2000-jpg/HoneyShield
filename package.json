@@ -7,6 +7,7 @@
     "start": "node frontend/js/app.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "express-session": "^1.19.0",
