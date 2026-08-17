@@ -2,8 +2,10 @@
 const SUPABASE_URL = "https://tvhuflxhzaulpoojdfeu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMzk1MTgsImV4cCI6MjA1NjkxNTUxOH0.K267fLlsg_zY5zMvS9PZzXjDLOqC1L5U2K3M0aM_u_k";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+// Replace line 5 with this safe initialization:
+const supabase = (typeof window !== 'undefined' && window.supabase) 
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
+    : null;
 // Audio Alert System
 let audioCtx = null;
 let sirenActive = true;
