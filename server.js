@@ -4,20 +4,22 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'frontend')));
 
 // 1. Root URL opens Login Portal first
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
 
-// 2. Route for Dashboard
+// 2. Explicit route for Dashboard
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// 3. Fallback Route
-app.get(/(.*)/, (req, res) => {
+// Static files support (js, css, images)
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// 3. Fallback Route for unmatched requests
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
 
