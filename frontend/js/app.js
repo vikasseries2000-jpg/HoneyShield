@@ -1,45 +1,12 @@
-// Honeypot App Configuration and Core Logic
 const SUPABASE_URL = "https://tvhuflxhzaulpoojdfeu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMzk1MTgsImV4cCI6MjA1NjkxNTUxOH0.K267fLlsg_zY5zMvS9PZzXjDLOqC1L5U2K3M0aM_u_k";
 
-// Safe initialization for Browser/Node compatibility
 const supabase = (typeof window !== 'undefined' && window.supabase) 
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
     : null;
 
-// Audio Alert System
-let audioCtx = null;
-let sirenActive = true;
+let attackChartInstance = null;
 
-function initAudio() {
-    if (!audioCtx && typeof window !== 'undefined') {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
-
-function playSiren() {
-    if (!sirenActive || !audioCtx) return;
-    initAudio();
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
-    
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.5);
-}
-
-// Client IP Fetcher
 async function fetchClientIP() {
     try {
         const res = await fetch('https://api.ipify.org?format=json');
@@ -50,18 +17,12 @@ async function fetchClientIP() {
     }
 }
 
-// Database Helper Functions
 async function getBlockedIPsSet() {
     if (!supabase) return new Set();
     try {
-        const { data, error } = await supabase.from('blocked_ips').select('ip');
-        if (error) {
-            console.error('Error fetching blocked IPs:', error);
-            return new Set();
-        }
-        return new Set(data.map(row => row.ip));
+        const { data } = await supabase.from('blocked_ips').select('ip');
+        return new Set((data || []).map(row => row.ip));
     } catch (e) {
-        console.error('Unexpected error fetching blocked IPs:', e);
         return new Set();
     }
 }
@@ -69,95 +30,30 @@ async function getBlockedIPsSet() {
 async function getIPAttackCount(ip) {
     if (!supabase) return 0;
     try {
-        const { data, error } = await supabase
-            .from('threat_logs')
-            .select('id')
-            .eq('ip_address', ip);
-            
-        if (error) {
-            console.error('Error fetching IP count:', error);
-            return 0;
-        }
+        const { data } = await supabase.from('threat_logs').select('id').eq('ip_address', ip);
         return data ? data.length : 0;
     } catch (e) {
-        console.error('Unexpected error fetching IP count:', e);
         return 0;
     }
 }
 
-// Register Threat & Auto-Block Logic
-async function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
-    if (!supabase) return { currentCount: 0, isBlocked: false };
-
-    const currentCount = (await getIPAttackCount(realIP)) + 1;
-    const existingBlocked = await getBlockedIPsSet();
-    const isBlocked = currentCount >= 3 || existingBlocked.has(realIP);
-
-    // Auto-insert into blocked_ips if threshold hit
-    if (isBlocked && !existingBlocked.has(realIP)) {
-        const { error: blockErr } = await supabase.from('blocked_ips').insert([{ ip: realIP }]);
-        if (blockErr) {
-            console.error('Error inserting blocked IP:', blockErr);
-        }
-    }
-
-    const { error: logErr } = await supabase.from('threat_logs').insert([{
-        ip_address: realIP,
-        threat_type: attackType,
-        attempts: currentCount,
-        created_at: new Date().toISOString()
-    }]);
-
-    if (logErr) {
-        console.error('Error logging threat:', logErr);
-    }
-
-    playSiren();
-    return { currentCount, isBlocked };
-}
-
-// Manual IP Action Handlers
-async function toggleBlockIP(ip) {
-    if (!supabase) return;
-    const blocked = await getBlockedIPsSet();
-    if (blocked.has(ip)) {
-        const { error } = await supabase.from('blocked_ips').delete().eq('ip', ip);
-        if (error) console.error('Error unblocking IP:', error);
-    } else {
-        const { error } = await supabase.from('blocked_ips').insert([{ ip }]);
-        if (error) console.error('Error blocking IP:', error);
-    }
-    loadDashboard();
-}
-
-async function unblockAllIPs() {
-    if (!supabase) return;
-    const { error } = await supabase.from('blocked_ips').delete().neq('ip', '0.0.0.0');
-    if (error) console.error('Error clearing blocked IPs:', error);
-    loadDashboard();
-}
-
-// Chart.js Pie Chart Rendering Helper
-let attackChartInstance = null;
-
-function updateAttackChart(sqli, xss, brute) {
+// Render Pie Chart for Attack Distribution
+function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (attackChartInstance) attackChartInstance.destroy();
 
-    if (attackChartInstance) {
-        attackChartInstance.destroy();
-    }
+    const total = sqli + xss + brute;
 
     attackChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: ['SQLi', 'XSS', 'Brute Force'],
+            labels: total > 0 ? ['SQLi Attack', 'XSS Attack', 'Brute Force / Invalid Pass'] : ['No Attacks Yet'],
             datasets: [{
-                data: [sqli, xss, brute],
-                backgroundColor: ['#e53e3e', '#ecc94b', '#3182ce'],
+                data: total > 0 ? [sqli, xss, brute] : [1],
+                backgroundColor: total > 0 ? ['#ef4444', '#eab308', '#38bdf8'] : ['#334155'],
                 borderWidth: 0
             }]
         },
@@ -165,95 +61,79 @@ function updateAttackChart(sqli, xss, brute) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#a0aec0', font: { size: 12 } }
-                }
+                legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
             }
         }
     });
 }
 
-// Dashboard UI Rendering
+// Load Dashboard Data
 async function loadDashboard() {
     if (!supabase) return;
-    
-    const blockedSet = await getBlockedIPsSet();
-    
-    const { data: logs, error } = await supabase
-        .from('threat_logs')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('Error fetching logs:', error);
-        return;
+    const blockedSet = await getBlockedIPsSet();
+    const { data: logs } = await supabase.from('threat_logs').select('*').order('created_at', { ascending: false });
+
+    if (!logs) return;
+
+    document.getElementById('totalAttacks').innerText = logs.length;
+    document.getElementById('blockedCount').innerText = blockedSet.size;
+
+    const blockedContainer = document.getElementById('blockedIpList');
+    if (blockedSet.size === 0) {
+        blockedContainer.innerHTML = 'No IPs currently blacklisted.';
+    } else {
+        blockedContainer.innerHTML = Array.from(blockedSet).map(ip => `<span style="background:#7f1d1d; color:#fca5a5; padding:3px 8px; border-radius:4px; margin-right:5px; font-family:monospace;">${ip}</span>`).join('');
     }
 
-    // Update Top Counters
-    const totalThreats = logs.length;
-    const blockedCount = blockedSet.size;
-    
-    const totalThreatsEl = document.getElementById('total-threats');
-    const blockedIpsEl = document.getElementById('blocked-ips-count');
-    
-    if (totalThreatsEl) totalThreatsEl.innerText = totalThreats;
-    if (blockedIpsEl) blockedIpsEl.innerText = blockedCount;
-
-    // Categorize Vector Attack Breakdown for Graph
-    let sqliCount = 0;
-    let xssCount = 0;
-    let bruteCount = 0;
-
+    // Pie Chart Breakdown
+    let sqli = 0, xss = 0, brute = 0;
     logs.forEach(log => {
         const type = (log.threat_type || '').toLowerCase();
-        if (type.includes('sqli') || type.includes('sql')) sqliCount++;
-        else if (type.includes('xss')) xssCount++;
-        else bruteCount++;
+        if (type.includes('sqli') || type.includes('sql')) sqli++;
+        else if (type.includes('xss')) xss++;
+        else brute++;
     });
 
-    updateAttackChart(sqliCount, xssCount, bruteCount);
+    renderPieChart(sqli, xss, brute);
 
-    // Render Table Body
-    const tableBody = document.getElementById('logs-table-body');
+    const tableBody = document.getElementById('logsTable');
     if (!tableBody) return;
-    
     tableBody.innerHTML = '';
 
     logs.forEach(log => {
         const isBlocked = blockedSet.has(log.ip_address);
         const row = document.createElement('tr');
-        
-        const dateStr = new Date(log.created_at).toLocaleTimeString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-            hour12: true,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-
         row.innerHTML = `
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748;">${dateStr}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748; color: #ecc94b; font-weight: bold;">${log.ip_address}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748;">${log.threat_type || 'Brute Force / Bad Credentials'}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748; color: #e53e3e;">${log.user_attempted || 'Admin'}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748; color: #e53e3e;">••••••</td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748;">
-                <span style="background: ${isBlocked ? '#9b2c2c' : '#744210'}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px;">
-                    ${isBlocked ? 'BLOCKED (' + log.attempts + '/3)' : 'LOGGED (' + log.attempts + '/3)'}
-                </span>
-            </td>
-            <td style="padding: 10px; border-bottom: 1px solid #2d3748;">
-                <button onclick="toggleBlockIP('${log.ip_address}')" style="background: ${isBlocked ? '#2b6cb0' : '#c53030'}; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                    ${isBlocked ? 'Unblock' : 'Block'}
-                </button>
-            </td>
+            <td>${new Date(log.created_at).toLocaleTimeString()}</td>
+            <td style="color: #f43f5e; font-weight: bold;">${log.ip_address}</td>
+            <td style="color: #eab308;">${log.threat_type || 'Brute Force'}</td>
+            <td style="color: #38bdf8;">${log.user_attempted || 'N/A'}</td>
+            <td><span style="background: ${isBlocked ? '#ef4444' : '#334155'}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${isBlocked ? 'BLOCKED' : 'LOGGED'}</span></td>
+            <td><button onclick="toggleBlock('${log.ip_address}')" style="background:#ef4444; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer;">${isBlocked ? 'Unblock' : 'Block'}</button></td>
         `;
         tableBody.appendChild(row);
     });
 }
 
-// Attack Simulation Form Handler (Login Page)
+async function unblockAllIPs() {
+    if (!supabase) return;
+    await supabase.from('blocked_ips').delete().neq('ip', '0.0.0.0');
+    loadDashboard();
+}
+
+async function toggleBlock(ip) {
+    if (!supabase) return;
+    const blockedSet = await getBlockedIPsSet();
+    if (blockedSet.has(ip)) {
+        await supabase.from('blocked_ips').delete().eq('ip', ip);
+    } else {
+        await supabase.from('blocked_ips').insert([{ ip }]);
+    }
+    loadDashboard();
+}
+
+// Login Logic & Threat Detection
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
@@ -261,59 +141,59 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const ip = await fetchClientIP();
             const blockedSet = await getBlockedIPsSet();
-
-            const statusBanner = document.getElementById('status-message');
+            const statusMsg = document.getElementById('status-message');
 
             if (blockedSet.has(ip)) {
-                if (statusBanner) {
-                    statusBanner.style.display = 'block';
-                    statusBanner.style.background = '#e53e3e';
-                    statusBanner.innerText = '🛑 ACCESS BLOCKED: Your IP is blacklisted due to multiple attack attempts.';
-                }
-                playSiren();
+                statusMsg.style.display = 'block';
+                statusMsg.style.background = '#7f1d1d';
+                statusMsg.style.color = '#fca5a5';
+                statusMsg.innerText = '🛑 ACCESS BLOCKED: Your IP is blacklisted due to multiple threats!';
                 return;
             }
 
-            const userInput = document.getElementById('username')?.value || '';
-            const passInput = document.getElementById('password')?.value || '';
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
+            // Correct Credentials Test
+            if (username === 'admin' && password === 'admin123') {
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            // Threat Classification
             let attackType = 'Brute Force / Bad Credentials';
-            if (userInput.includes("'") || userInput.toLowerCase().includes('or') || userInput.includes('--')) {
+            if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
                 attackType = 'SQL Injection (SQLi)';
-            } else if (userInput.includes('<script>') || userInput.includes('javascript:')) {
+            } else if (username.includes('<script>') || username.includes('javascript:')) {
                 attackType = 'Cross-Site Scripting (XSS)';
             }
 
-            const result = await registerAttack(ip, '/login', attackType, navigator.userAgent, userInput, passInput);
+            const currentCount = (await getIPAttackCount(ip)) + 1;
+            const isBlocked = currentCount >= 3;
 
-            if (result.isBlocked) {
-                if (statusBanner) {
-                    statusBanner.style.display = 'block';
-                    statusBanner.style.background = '#e53e3e';
-                    statusBanner.innerText = '🛑 ACCESS BLOCKED: Threshold (3/3) exceeded! IP Blacklisted.';
-                }
-            } else {
-                if (statusBanner) {
-                    statusBanner.style.display = 'block';
-                    statusBanner.style.background = '#dd6b20';
-                    statusBanner.innerText = `⚠️ Invalid credentials! Threat logged. Attempt ${result.currentCount}/3`;
-                }
+            if (isBlocked) {
+                await supabase.from('blocked_ips').insert([{ ip }]);
             }
+
+            await supabase.from('threat_logs').insert([{
+                ip_address: ip,
+                threat_type: attackType,
+                user_attempted: username,
+                attempts: currentCount,
+                created_at: new Date().toISOString()
+            }]);
+
+            statusMsg.style.display = 'block';
+            statusMsg.style.background = isBlocked ? '#7f1d1d' : '#713f12';
+            statusMsg.style.color = isBlocked ? '#fca5a5' : '#fef08a';
+            statusMsg.innerText = isBlocked 
+                ? '🛑 ACCESS BLOCKED: 3 Bad Attempts Exceeded! IP Blacklisted.' 
+                : `⚠️ Invalid Credentials / Threat Detected! Attempt ${currentCount}/3`;
         });
     }
 
-    // Toggle Siren Sound Button
-    const sirenBtn = document.getElementById('toggle-siren');
-    if (sirenBtn) {
-        sirenBtn.addEventListener('click', () => {
-            sirenActive = !sirenActive;
-            sirenBtn.innerText = sirenActive ? '🔊 Siren Sound Active' : '🔇 Siren Sound Muted';
-        });
-    }
-
-    // Auto-refresh Dashboard if on Dashboard Page
-    if (document.getElementById('logs-table-body')) {
+    if (document.getElementById('logsTable')) {
         loadDashboard();
-        setInterval(loadDashboard, 5000);
+        setInterval(loadDashboard, 4000);
     }
 });

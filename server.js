@@ -3,20 +3,20 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Static files serve karein
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Direct Open Login Page at '/'
+// 1. Root URL opens Login Portal first
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
 
-// Explicit Route for Dashboard
+// 2. Route for Dashboard
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// Express v5 compatible fallback route
+// 3. Fallback Route
 app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'login.html'));
 });
