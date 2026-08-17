@@ -8,7 +8,7 @@ const supabase = (typeof window !== 'undefined' && window.supabase)
 let attackChartInstance = null;
 let audioCtx = null;
 
-// 🔊 Beep Sound
+// 🔊 Beep Sound Function
 function playBeepSound(times = 1) {
     try {
         if (!audioCtx) {
@@ -72,7 +72,7 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// 📊 Render Pie Chart
+// 📊 Pie Chart
 function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -167,27 +167,18 @@ async function toggleBlock(ip) {
     loadDashboard();
 }
 
-// Form Handling
+// Login Logic
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const statusMsg = document.getElementById('status-message');
-
-            // 1. Correct Credentials -> Redirect directly to Dashboard
-            if (username === 'admin' && password === 'admin123') {
-                window.location.href = '/index.html';
-                return;
-            }
-
-            // 2. IP Blocking & Attack Logging logic
             const ip = await fetchClientIP();
             const blockedSet = await getBlockedIPsSet();
+            const statusMsg = document.getElementById('status-message');
 
+            // 1. Agar IP pehle se blocked hai -> No Access
             if (blockedSet.has(ip)) {
                 playBeepSound(3);
                 statusMsg.style.display = 'block';
@@ -197,6 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // 2. Direct Redirect ONLY on Correct Credentials
+            if (username === 'admin' && password === 'admin123') {
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            // 3. Failed Attempt / Threat Detection
             let attackType = 'Brute Force / Bad Credentials';
             if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
                 attackType = 'SQL Injection (SQLi)';
@@ -207,10 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentCount = (await getIPAttackCount(ip)) + 1;
             const isBlocked = currentCount >= 3;
 
+            // Block IP if threshold reached
             if (isBlocked) {
                 await supabase.from('blocked_ips').insert([{ ip }]);
             }
 
+            // Log attempt into threat_logs
             await supabase.from('threat_logs').insert([{
                 ip_address: ip,
                 threat_type: attackType,
@@ -219,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 created_at: new Date().toISOString()
             }]);
 
+            // 4. Sound Alerts (1 Beep for <3 attempts, 3 Beeps for Block)
             if (isBlocked) {
                 playBeepSound(3);
             } else {
