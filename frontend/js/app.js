@@ -1,21 +1,25 @@
 /**
  * ============================================================================
- * HONEYSHIELD DEFENSE CONSOLE - COMPACT PIE CHART & FIXED SIREN TOGGLE
+ * HONEYSHIELD DEFENSE CONSOLE - SUPABASE PERMANENT DATABASE STORAGE
  * ============================================================================
  */
 
 const express = require('express');
 const session = require('express-session');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable proxy trusting to correctly parse real client IPs on Render / Cloudflare
-app.set('trust proxy', true);
+// ============================================================================
+// SUPABASE DATABASE CONNECTION
+// ============================================================================
+// Paste your copied Project URL and Anon Public Key here or set in Env Variables
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tvhuflxhzaulpoojdfeu.supabase.co/rest/v1/';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDQ4MzMsImV4cCI6MjEwMjUyMDgzM30.NK4jAU9UX51VkV6pCTnTUGKrFWE58X10TUJnS9SrG-o';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ============================================================================
-// 1. CORE MIDDLEWARE & CONFIGURATION
-// ============================================================================
+app.set('trust proxy', true);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -23,48 +27,26 @@ app.use(session({
     secret: 'honeyshield_cyber_defense_secret_key_2026',
     resave: false,
     saveUninitialized: true,
-    cookie: { 
-        maxAge: 24 * 60 * 60 * 1000,
-        secure: false
-    }
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// ============================================================================
-// 2. IN-MEMORY THREAT INTELLIGENCE DATABASES
-// ============================================================================
+// User Auth Database
 const USERS_DB = {
     'admin': { password: 'adminpassword', role: 'admin', name: 'System Administrator' },
     'user1': { password: 'userpassword', role: 'user', name: 'Standard Operator' }
 };
 
-const blockedIPs = new Set();
-const ipAttackCounts = {};
-const threatLogs = [];
-const honeypotTrapsTriggered = { total: 0 };
-
 // ============================================================================
-// 3. UTILITY & HELPER FUNCTIONS
+// UTILITY FUNCTIONS
 // ============================================================================
-
 function getClientIP(req) {
     const xForwardedFor = req.headers['x-forwarded-for'];
-    if (xForwardedFor) {
-        return xForwardedFor.split(',')[0].trim();
-    }
-
-    const cfIP = req.headers['cf-connecting-ip'];
-    if (cfIP) return cfIP;
-
-    const realIP = req.headers['x-real-ip'];
-    if (realIP) return realIP;
-
+    if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
+    if (req.headers['cf-connecting-ip']) return req.headers['cf-connecting-ip'];
+    if (req.headers['x-real-ip']) return req.headers['x-real-ip'];
     let ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
-    if (ip.includes('::ffff:')) {
-        ip = ip.replace('::ffff:', '');
-    }
-    if (ip === '::1') {
-        ip = '127.0.0.1';
-    }
+    if (ip.includes('::ffff:')) ip = ip.replace('::ffff:', '');
+    if (ip === '::1') ip = '127.0.0.1';
     return ip;
 }
 
@@ -80,37 +62,54 @@ function escapeHTML(str) {
 
 function classifyAttackPayload(username = '', password = '') {
     const input = `${username} ${password}`;
-
-    const sqliRegex = /(\'|\"|\-\-|\b(OR|AND|SELECT|INSERT|DELETE|DROP|UNION|EXEC)\b)/i;
-    const xssRegex = /(<script>|javascript:|onload=|onerror=|<iframe|<img)/i;
-    const pathTraversalRegex = /(\.\.\/|\.\.\\|etc\/passwd|boot\.ini)/i;
-    const cmdInjectionRegex = /(;|\||`|\$\(|system\(|exec\()/i;
-
-    if (sqliRegex.test(input)) return 'SQL Injection (SQLi)';
-    if (xssRegex.test(input)) return 'Cross-Site Scripting (XSS)';
-    if (pathTraversalRegex.test(input)) return 'Directory Traversal Attempt';
-    if (cmdInjectionRegex.test(input)) return 'Command Injection Attempt';
-    
+    if (/(\'|\"|\-\-|\b(OR|AND|SELECT|INSERT|DELETE|DROP|UNION|EXEC)\b)/i.test(input)) return 'SQL Injection (SQLi)';
+    if (/(<script>|javascript:|onload=|onerror=|<iframe|<img)/i.test(input)) return 'Cross-Site Scripting (XSS)';
+    if (/(\.\.\/|\.\.\\|etc\/passwd|boot\.ini)/i.test(input)) return 'Directory Traversal Attempt';
+    if (/(;|\||`|\$\(|system\(|exec\()/i.test(input)) return 'Command Injection Attempt';
     return 'Brute Force / Bad Credentials';
 }
 
 function getFormattedISTTime() {
     return new Date().toLocaleTimeString('en-IN', { 
         timeZone: 'Asia/Kolkata',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true 
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
     });
 }
 
-function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
-    ipAttackCounts[realIP] = (ipAttackCounts[realIP] || 0) + 1;
-    const currentCount = ipAttackCounts[realIP];
-    const isBlocked = currentCount >= 3 || blockedIPs.has(realIP);
-    
-    if (isBlocked) {
-        blockedIPs.add(realIP);
+// ============================================================================
+// SUPABASE DATABASE OPERATIONS
+// ============================================================================
+async function getThreatLogs() {
+    const { data, error } = await supabase
+        .from('threat_logs')
+        .select('*')
+        .order('id', { ascending: false });
+    if (error) { console.error('Error fetching logs:', error); return []; }
+    return data || [];
+}
+
+async function getBlockedIPsSet() {
+    const { data, error } = await supabase.from('blocked_ips').select('ip');
+    if (error) { console.error('Error fetching blocked IPs:', error); return new Set(); }
+    return new Set(data.map(item => item.ip));
+}
+
+async function getIPAttackCount(ip) {
+    const { count, error } = await supabase
+        .from('threat_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('ip', ip);
+    if (error) return 0;
+    return count || 0;
+}
+
+async function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N/A', attemptedPass = 'N/A') {
+    const currentCount = (await getIPAttackCount(realIP)) + 1;
+    const existingBlocked = await getBlockedIPsSet();
+    const isBlocked = currentCount >= 3 || existingBlocked.has(realIP);
+
+    if (isBlocked && !existingBlocked.has(realIP)) {
+        await supabase.from('blocked_ips').insert([{ ip: realIP }]);
     }
 
     const newLog = {
@@ -118,21 +117,20 @@ function registerAttack(realIP, route, attackType, userAgent, attemptedUser = 'N
         time: getFormattedISTTime(),
         ip: realIP,
         route: route,
-        attackType: attackType,
-        attemptedUser: attemptedUser || 'N/A',
-        attemptedPass: attemptedPass || 'N/A',
+        attack_type: attackType,
+        attempted_user: attemptedUser || 'N/A',
+        attempted_pass: attemptedPass || 'N/A',
         action: isBlocked ? 'BLOCKED' : 'LOGGED',
-        userAgent: userAgent || 'Unknown Client',
-        isNewBlock: isBlocked,
-        attackCount: currentCount
+        user_agent: userAgent || 'Unknown Client',
+        attack_count: currentCount
     };
 
-    threatLogs.unshift(newLog);
+    await supabase.from('threat_logs').insert([newLog]);
     return isBlocked;
 }
 
 // ============================================================================
-// 4. SIREN SCRIPT DEFINITION & INJECTION MIDDLEWARE
+// SIREN SCRIPT & MIDDLEWARE
 // ============================================================================
 const SIREN_SCRIPT = `
 <script>
@@ -143,75 +141,48 @@ const SIREN_SCRIPT = `
         if (!sirenAudioCtx) {
             sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        if (sirenAudioCtx.state === 'suspended') {
-            sirenAudioCtx.resume();
-        }
+        if (sirenAudioCtx.state === 'suspended') sirenAudioCtx.resume();
         return sirenAudioCtx;
     }
 
     function playSirenBeep() {
         if (localStorage.getItem('sirenEnabled') !== 'true') return;
-        
         try {
             const ctx = getAudioContext();
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-
             osc.type = 'sawtooth';
             const now = ctx.currentTime;
-
             osc.frequency.setValueAtTime(600, now);
             osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
             osc.frequency.linearRampToValueAtTime(600, now + 0.6);
-
             gain.gain.setValueAtTime(0.8, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-
             osc.connect(gain);
             gain.connect(ctx.destination);
-
             osc.start(now);
             osc.stop(now + 0.8);
-        } catch (e) {
-            console.error("Audio Play Error:", e);
-        }
+        } catch (e) { console.error("Audio Play Error:", e); }
     }
 
     function updateSirenUI(isEnabled) {
         const btn = document.getElementById('sirenToggleBtn');
         if (!btn) return;
-        
-        if (isEnabled) {
-            btn.classList.add('active');
-            btn.innerHTML = '🔊 Siren Sound Active';
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = '🔔 Enable Siren Sound';
-        }
+        btn.classList.toggle('active', isEnabled);
+        btn.innerHTML = isEnabled ? '🔊 Siren Sound Active' : '🔔 Enable Siren Sound';
     }
 
     window.toggleSirenAudio = function() {
-        const isCurrentlyEnabled = localStorage.getItem('sirenEnabled') === 'true';
-        const newState = !isCurrentlyEnabled;
-        
+        const newState = !(localStorage.getItem('sirenEnabled') === 'true');
         localStorage.setItem('sirenEnabled', newState ? 'true' : 'false');
         updateSirenUI(newState);
-
-        if (newState) {
-            getAudioContext();
-            playSirenBeep(); // Test sound on enable
-        }
+        if (newState) { getAudioContext(); playSirenBeep(); }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        const isEnabled = localStorage.getItem('sirenEnabled') === 'true';
-        updateSirenUI(isEnabled);
-
-        // Global unlock on click
+        updateSirenUI(localStorage.getItem('sirenEnabled') === 'true');
         document.body.addEventListener('click', () => {
-            if (localStorage.getItem('sirenEnabled') === 'true') {
-                getAudioContext();
-            }
+            if (localStorage.getItem('sirenEnabled') === 'true') getAudioContext();
         }, { once: true });
     });
 
@@ -219,15 +190,12 @@ const SIREN_SCRIPT = `
         try {
             const res = await fetch('/api/logs');
             const data = await res.json();
-            
             if (lastLogCount > 0 && data.logs.length > lastLogCount) {
                 playSirenBeep();
                 setTimeout(() => { window.location.reload(); }, 400);
             }
             lastLogCount = data.logs.length;
-        } catch (err) {
-            console.error("Polling error:", err);
-        }
+        } catch (err) {}
     }, 1500);
 </script>
 `;
@@ -244,23 +212,24 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
-// 5. UI HTML TEMPLATES GENERATOR
+// HTML RENDER ENGINE
 // ============================================================================
-function renderHTML(title, pageType, data = {}) {
-    const attackCounts = {
-        'SQLi': 0,
-        'XSS': 0,
-        'Brute Force': 0,
-        'Honeypot Trap': 0,
-        'Others': 0
-    };
+async function renderHTML(title, pageType, data = {}) {
+    const threatLogs = await getThreatLogs();
+    const blockedIPs = await getBlockedIPsSet();
+
+    let honeypotsCount = 0;
+    const attackCounts = { 'SQLi': 0, 'XSS': 0, 'Brute Force': 0, 'Honeypot Trap': 0, 'Others': 0 };
 
     threatLogs.forEach(log => {
-        if (log.attackType.includes('SQL')) attackCounts['SQLi']++;
-        else if (log.attackType.includes('XSS')) attackCounts['XSS']++;
-        else if (log.attackType.includes('Brute')) attackCounts['Brute Force']++;
-        else if (log.attackType.includes('Honeypot')) attackCounts['Honeypot Trap']++;
-        else attackCounts['Others']++;
+        const type = log.attack_type || '';
+        if (type.includes('SQL')) attackCounts['SQLi']++;
+        else if (type.includes('XSS')) attackCounts['XSS']++;
+        else if (type.includes('Brute')) attackCounts['Brute Force']++;
+        else if (type.includes('Honeypot')) {
+            attackCounts['Honeypot Trap']++;
+            honeypotsCount++;
+        } else attackCounts['Others']++;
     });
 
     return `
@@ -273,107 +242,46 @@ function renderHTML(title, pageType, data = {}) {
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
             :root {
-                --bg-primary: #0b1320;
-                --bg-secondary: #131f37;
-                --bg-card: #182744;
-                --text-main: #e2e8f0;
-                --text-muted: #94a3b8;
-                --accent-blue: #38bdf8;
-                --accent-green: #10b981;
-                --accent-yellow: #f59e0b;
-                --accent-red: #ef4444;
+                --bg-primary: #0b1320; --bg-secondary: #131f37; --bg-card: #182744;
+                --text-main: #e2e8f0; --text-muted: #94a3b8; --accent-blue: #38bdf8;
+                --accent-green: #10b981; --accent-yellow: #f59e0b; --accent-red: #ef4444;
                 --border-color: #1e293b;
             }
-
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
             body { background-color: var(--bg-primary); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
-            
-            header { 
-                background: var(--bg-secondary); 
-                border-bottom: 1px solid var(--border-color); 
-                padding: 16px 32px; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-            }
+            header { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
             .logo { font-size: 22px; font-weight: 700; color: var(--accent-blue); display: flex; align-items: center; gap: 10px; }
             .user-nav { display: flex; align-items: center; gap: 15px; font-size: 14px; color: var(--text-muted); }
             .user-nav b { color: var(--text-main); }
-            
-            .btn-siren {
-                background: rgba(239, 68, 68, 0.2);
-                border: 1px solid var(--accent-red);
-                color: var(--accent-red);
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-weight: 700;
-                font-size: 13px;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .btn-siren.active {
-                background: rgba(16, 185, 129, 0.2) !important;
-                border-color: #10b981 !important;
-                color: #10b981 !important;
-            }
-
+            .btn-siren { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
+            .btn-siren.active { background: rgba(16, 185, 129, 0.2) !important; border-color: #10b981 !important; color: #10b981 !important; }
             .btn-logout { color: var(--accent-red); text-decoration: none; font-weight: 600; }
-
             .container { padding: 30px; max-width: 1300px; margin: 0 auto; width: 100%; flex: 1; }
-            
             .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
             .card-stat { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; }
-            .card-stat h4 { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+            .card-stat h4 { font-size: 14px; color: var(--text-muted); text-transform: uppercase; }
             .card-stat .val { font-size: 32px; font-weight: 800; margin-top: 8px; }
-
-            .main-dashboard-grid {
-                display: grid;
-                grid-template-columns: 2.2fr 1fr;
-                gap: 25px;
-            }
-
-            @media (max-width: 992px) {
-                .main-dashboard-grid { grid-template-columns: 1fr; }
-            }
-
-            .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+            .main-dashboard-grid { display: grid; grid-template-columns: 2.2fr 1fr; gap: 25px; }
+            @media (max-width: 992px) { .main-dashboard-grid { grid-template-columns: 1fr; } }
+            .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; margin-bottom: 25px; }
             .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
             .card-title { color: var(--accent-blue); font-size: 18px; font-weight: 700; }
-
             .login-box { max-width: 420px; margin: 40px auto; }
-            label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
-            input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 18px; background: var(--bg-primary); border: 1px solid #334155; color: #fff; border-radius: 6px; outline: none; }
-            
-            button { padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 15px; }
-
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+            label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); }
+            input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 18px; background: var(--bg-primary); border: 1px solid #334155; color: #fff; border-radius: 6px; }
+            button { padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; }
+            table { width: 100%; border-collapse: collapse; font-size: 14px; }
             th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-            th { background: var(--bg-primary); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 12px; }
-            tr:hover { background: rgba(255,255,255,0.02); }
-
+            th { background: var(--bg-primary); color: var(--text-muted); font-size: 12px; }
             .badge-blocked { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
             .badge-logged { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
-            
-            .btn-action-unblock { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; }
-            .btn-action-block { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; }
-
+            .btn-action-unblock { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+            .btn-action-block { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: var(--accent-red); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
             code { font-family: monospace; color: #f43f5e; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; }
             .ip-highlight { color: var(--accent-yellow); font-weight: 700; }
             .payload-user { color: var(--accent-red); font-weight: 700; }
-
-            .top-actions { display: flex; gap: 10px; }
-            .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); }
-
-            .pie-chart-container { 
-                position: relative; 
-                height: 170px; 
-                max-width: 170px;
-                margin: 0 auto;
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-            }
+            .btn-sm { padding: 6px 12px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; text-decoration: none; }
+            .pie-chart-container { position: relative; height: 170px; max-width: 170px; margin: 0 auto; }
         </style>
     </head>
     <body>
@@ -415,7 +323,7 @@ function renderHTML(title, pageType, data = {}) {
                     </div>
                     <div class="card-stat">
                         <h4>Honeypot Traps Triggered</h4>
-                        <div class="val" style="color: var(--accent-blue);">${honeypotTrapsTriggered.total}</div>
+                        <div class="val" style="color: var(--accent-blue);">${honeypotsCount}</div>
                     </div>
                 </div>
 
@@ -423,9 +331,9 @@ function renderHTML(title, pageType, data = {}) {
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">🚨 Real-Time Threat Intelligence Logs (IST Time)</div>
-                            <div class="top-actions">
-                                <a href="/api/export-csv" download="threat_logs.csv"><button class="btn-sm">📥 Export CSV</button></a>
-                                <a href="/unblock-me"><button class="btn-sm" style="color: var(--accent-green);">🔓 Unblock All IPs</button></a>
+                            <div style="display:flex; gap:10px;">
+                                <a href="/api/export-csv" class="btn-sm" download="threat_logs.csv">📥 Export CSV</a>
+                                <a href="/unblock-me" class="btn-sm" style="color: var(--accent-green);">🔓 Unblock All IPs</a>
                             </div>
                         </div>
                         
@@ -438,7 +346,7 @@ function renderHTML(title, pageType, data = {}) {
                                     <th>Captured User</th>
                                     <th>Captured Pass</th>
                                     <th>Status</th>
-                                    <th>IP Action Toggle</th>
+                                    <th>IP Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -448,23 +356,23 @@ function renderHTML(title, pageType, data = {}) {
                                     <tr>
                                         <td>${log.time}</td>
                                         <td><span class="ip-highlight">${escapeHTML(log.ip)}</span></td>
-                                        <td>${escapeHTML(log.attackType)}</td>
-                                        <td><span class="payload-user">${escapeHTML(log.attemptedUser)}</span></td>
-                                        <td><code>${escapeHTML(log.attemptedPass)}</code></td>
+                                        <td>${escapeHTML(log.attack_type)}</td>
+                                        <td><span class="payload-user">${escapeHTML(log.attempted_user)}</span></td>
+                                        <td><code>${escapeHTML(log.attempted_pass)}</code></td>
                                         <td>
                                             <span class="${isCurrentlyBlocked ? 'badge-blocked' : 'badge-logged'}">
-                                                ${isCurrentlyBlocked ? 'BLOCKED' : 'LOGGED'} (${log.attackCount}/3)
+                                                ${isCurrentlyBlocked ? 'BLOCKED' : 'LOGGED'} (${log.attack_count}/3)
                                             </span>
                                         </td>
                                         <td>
                                             <button class="${isCurrentlyBlocked ? 'btn-action-unblock' : 'btn-action-block'}" onclick="toggleIPBlock('${escapeHTML(log.ip)}')">
-                                                ${isCurrentlyBlocked ? '🔓 Unblock IP' : '🛑 Block IP'}
+                                                ${isCurrentlyBlocked ? '🔓 Unblock' : '🛑 Block'}
                                             </button>
                                         </td>
                                     </tr>
                                     `;
                                 }).join('')}
-                                ${threatLogs.length === 0 ? `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet. System operational.</td></tr>` : ''}
+                                ${threatLogs.length === 0 ? `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No threat activity recorded yet.</td></tr>` : ''}
                             </tbody>
                         </table>
                     </div>
@@ -481,19 +389,13 @@ function renderHTML(title, pageType, data = {}) {
 
                 <script>
                     async function toggleIPBlock(ip) {
-                        try {
-                            const res = await fetch('/api/toggle-block', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ ip })
-                            });
-                            const data = await res.json();
-                            if (data.success) {
-                                window.location.reload();
-                            }
-                        } catch (err) {
-                            console.error('IP Toggle error:', err);
-                        }
+                        const res = await fetch('/api/toggle-block', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ip })
+                        });
+                        const data = await res.json();
+                        if (data.success) window.location.reload();
                     }
 
                     document.addEventListener('DOMContentLoaded', () => {
@@ -505,30 +407,17 @@ function renderHTML(title, pageType, data = {}) {
                                 datasets: [{
                                     data: [${attackCounts['SQLi']}, ${attackCounts['XSS']}, ${attackCounts['Brute Force']}, ${attackCounts['Honeypot Trap']}, ${attackCounts['Others']}],
                                     backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#8b5cf6', '#64748b'],
-                                    borderWidth: 2,
-                                    borderColor: '#131f37'
+                                    borderWidth: 2, borderColor: '#131f37'
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom',
-                                        labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 }
-                                    }
-                                }
+                                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } }
                             }
                         });
                     });
                 </script>
-            ` : ''}
-
-            ${pageType === 'dashboard' ? `
-                <div class="card">
-                    <h2 style="color: var(--accent-green); margin-bottom: 10px;">Welcome to User Terminal</h2>
-                    <p style="color: var(--text-muted);">Standard operator interface active.</p>
-                </div>
             ` : ''}
         </div>
     </body>
@@ -537,17 +426,14 @@ function renderHTML(title, pageType, data = {}) {
 }
 
 // ============================================================================
-// 6. HONEYPOT TRAP ROUTES
+// HONEYPOT ROUTES
 // ============================================================================
 const honeypotPaths = ['/wp-admin', '/phpmyadmin', '/.env', '/backup.sql', '/admin.php', '/api/v1/config'];
 
 honeypotPaths.forEach(trapPath => {
-    app.all(trapPath, (req, res) => {
+    app.all(trapPath, async (req, res) => {
         const clientIP = getClientIP(req);
-        honeypotTrapsTriggered.total += 1;
-        
-        registerAttack(clientIP, trapPath, `Honeypot Trap (${trapPath})`, req.get('User-Agent'), 'UNAUTHORIZED_RECON', 'N/A');
-
+        await registerAttack(clientIP, trapPath, `Honeypot Trap (${trapPath})`, req.get('User-Agent'), 'UNAUTHORIZED_RECON', 'N/A');
         res.status(403).send(`
             <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
                 <h1>🛑 HONEYPOT TRAP TRIGGERED</h1>
@@ -558,62 +444,51 @@ honeypotPaths.forEach(trapPath => {
 });
 
 // ============================================================================
-// 7. LOGIN & MANAGEMENT ROUTES
+// API & APP ROUTES
 // ============================================================================
-
-app.get('/', (req, res) => {
-    if (req.session.user) {
-        return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
-    }
-    res.send(renderHTML('Login', 'login'));
+app.get('/', async (req, res) => {
+    if (req.session.user) return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
+    res.send(await renderHTML('Login', 'login'));
 });
 
-app.get('/api/logs', (req, res) => {
-    res.json({
-        logs: threatLogs,
-        blockedCount: blockedIPs.size,
-        totalAttacks: threatLogs.length,
-        honeypots: honeypotTrapsTriggered.total
-    });
+app.get('/api/logs', async (req, res) => {
+    const logs = await getThreatLogs();
+    const blockedIPs = await getBlockedIPsSet();
+    res.json({ logs, blockedCount: blockedIPs.size, totalAttacks: logs.length });
 });
 
-app.post('/api/toggle-block', (req, res) => {
+app.post('/api/toggle-block', async (req, res) => {
     const { ip } = req.body;
     if (!ip) return res.status(400).json({ error: 'IP required' });
 
+    const blockedIPs = await getBlockedIPsSet();
     if (blockedIPs.has(ip)) {
-        blockedIPs.delete(ip);
-        ipAttackCounts[ip] = 0;
+        await supabase.from('blocked_ips').delete().eq('ip', ip);
     } else {
-        blockedIPs.add(ip);
+        await supabase.from('blocked_ips').insert([{ ip }]);
     }
-    res.json({ success: true, isBlocked: blockedIPs.has(ip) });
+    res.json({ success: true });
 });
 
-app.get('/unblock-me', (req, res) => {
+app.get('/unblock-me', async (req, res) => {
     const clientIP = getClientIP(req);
-    blockedIPs.clear();
-    for (let ip in ipAttackCounts) {
-        ipAttackCounts[ip] = 0;
-    }
-
+    await supabase.from('blocked_ips').delete().neq('ip', '');
     res.send(`
-        <div style="background:#0b1320; color:#10b981; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
-            <h1>✅ ALL IPs & ATTACK COUNTS RESET</h1>
-            <p style="color:#e2e8f0; margin-top:10px;">Your IP <b>${clientIP}</b> and all blacklisted addresses have been unblocked.</p>
-            <a href="/" style="color:#38bdf8; margin-top:20px; font-weight:bold; text-decoration:none; background:#131f37; padding:10px 20px; border-radius:6px; border:1px solid #1e293b;">Return to Login Page</a>
+        <div style="background:#0b1320; color:#10b981; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
+            <h1>✅ DATABASE CLEARED & UNBLOCKED</h1>
+            <p style="color:#e2e8f0; margin-top:10px;">All blacklisted IPs cleared from Supabase DB.</p>
+            <a href="/" style="color:#38bdf8; margin-top:20px; text-decoration:none;">Return to Home</a>
         </div>
     `);
 });
 
-app.get('/api/export-csv', (req, res) => {
-    if (!req.session.user || req.session.role !== 'admin') {
-        return res.status(403).send('Unauthorized');
-    }
+app.get('/api/export-csv', async (req, res) => {
+    if (!req.session.user || req.session.role !== 'admin') return res.status(403).send('Unauthorized');
 
+    const logs = await getThreatLogs();
     let csvContent = "Time (IST),Attacker IP,Attack Type,Captured User,Captured Pass,Action,Attack Count\n";
-    threatLogs.forEach(log => {
-        csvContent += `"${log.time}","${log.ip}","${log.attackType}","${log.attemptedUser}","${log.attemptedPass}","${log.action}","${log.attackCount}"\n`;
+    logs.forEach(log => {
+        csvContent += `"${log.time}","${log.ip}","${log.attack_type}","${log.attempted_user}","${log.attempted_pass}","${log.action}","${log.attack_count}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -621,16 +496,17 @@ app.get('/api/export-csv', (req, res) => {
     res.status(200).send(csvContent);
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const clientIP = getClientIP(req);
+    const blockedIPs = await getBlockedIPsSet();
 
     if (blockedIPs.has(clientIP)) {
         return res.status(403).send(`
-            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
-                <h1>🛑 ACCESS BLOCKED BY HONEYSHIELD</h1>
-                <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">IP Address <b style="color:#f59e0b;">${clientIP}</b> is blacklisted.</p>
-                <p style="color:#94a3b8;">Visit <a href="/unblock-me" style="color:#38bdf8;">/unblock-me</a> to unblock.</p>
+            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
+                <h1>🛑 ACCESS BLOCKED</h1>
+                <p style="color:#e2e8f0;">IP Address <b>${clientIP}</b> is permanently blacklisted in DB.</p>
+                <a href="/unblock-me" style="color:#38bdf8; margin-top:15px;">Unblock All IPs</a>
             </div>
         `);
     }
@@ -643,42 +519,37 @@ app.post('/login', (req, res) => {
         return req.session.role === 'admin' ? res.redirect('/admin') : res.redirect('/dashboard');
     }
 
-    const isBlocked = registerAttack(clientIP, '/login', detectedType, req.get('User-Agent'), username, password);
+    const isBlocked = await registerAttack(clientIP, '/login', detectedType, req.get('User-Agent'), username, password);
 
     if (isBlocked) {
         return res.status(403).send(`
-            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
-                <h1>🛑 MAXIMUM STRIKES EXCEEDED (3/3)</h1>
-                <p style="color:#e2e8f0; font-size:18px; margin: 15px 0;">Attacker IP <b style="color:#ef4444;">${clientIP}</b> is now blacklisted.</p>
+            <div style="background:#0b1320; color:#ef4444; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center;">
+                <h1>🛑 STRIKE LIMIT REACHED (3/3)</h1>
+                <p style="color:#e2e8f0;">Attacker IP <b>${clientIP}</b> is now blacklisted.</p>
             </div>
         `);
     }
 
-    res.send(renderHTML('Login', 'login', { 
-        error: `⚠️ Invalid Credentials! Threat registered from IP ${clientIP}. Attempt (${ipAttackCounts[clientIP]}/3)` 
+    const currentCount = await getIPAttackCount(clientIP);
+    res.send(await renderHTML('Login', 'login', { 
+        error: `⚠️ Invalid Credentials! Threat logged. Attempt (${currentCount}/3)` 
     }));
 });
 
-app.get('/admin', (req, res) => {
+app.get('/admin', async (req, res) => {
     if (!req.session.user || req.session.role !== 'admin') return res.redirect('/');
-    res.send(renderHTML('Admin Console', 'admin', { user: req.session.user }));
-});
-
-app.get('/dashboard', (req, res) => {
-    if (!req.session.user) return res.redirect('/');
-    res.send(renderHTML('User Dashboard', 'dashboard', { user: req.session.user }));
+    res.send(await renderHTML('Admin Console', 'admin', { user: req.session.user }));
 });
 
 app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.clearCookie('connect.sid');
-        res.redirect('/');
-    });
+    req.session.destroy(() => res.redirect('/'));
 });
 
 // ============================================================================
-// 8. SERVER LISTEN
+// LISTEN & EXPORT FOR VERCEL / RENDER
 // ============================================================================
-app.listen(PORT, () => {
-    console.log(`🛡️ HoneyShield Engine running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`🛡️ HoneyShield active on port ${PORT}`));
+}
+
+module.exports = app;
