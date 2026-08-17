@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>HoneyShield - IP Blocked</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #3b0a0a 0%,
+                    #120709 45%,
+                    #050509 100%
+                );
+
+            color: white;
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            text-align: center;
+
+        }
+
+        .blocked-card {
+
+            width: min(
+                700px,
+                90%
+            );
+
+            padding: 50px 35px;
+
+            border: 2px solid #ef4444;
+
+            border-radius: 18px;
+
+            background:
+                rgba(
+                    20,
+                    10,
+                    15,
+                    .96
+                );
+
+            box-shadow:
+                0 0 50px
+                rgba(
+                    239,
+                    68,
+                    68,
+                    .35
+                );
+
+        }
+
+        .icon {
+
+            font-size: 70px;
+
+            margin-bottom: 15px;
+
+        }
+
+        h1 {
+
+            margin: 0 0 20px;
+
+            color: #ff4d4d;
+
+            font-size: 34px;
+
+            letter-spacing: 1px;
+
+        }
+
+        .warning {
+
+            color: #fca5a5;
+
+            font-size: 20px;
+
+            font-weight: bold;
+
+            line-height: 1.5;
+
+        }
+
+        .message {
+
+            margin-top: 25px;
+
+            color: #cbd5e1;
+
+            font-size: 15px;
+
+            line-height: 1.7;
+
+        }
+
+        .status {
+
+            display: inline-block;
+
+            margin-top: 25px;
+
+            padding: 12px 20px;
+
+            border-radius: 8px;
+
+            background: #7f1d1d;
+
+            color: #fecaca;
+
+            font-weight: bold;
+
+            font-family: monospace;
+
+        }
+
+        .footer {
+
+            margin-top: 30px;
+
+            color: #64748b;
+
+            font-size: 12px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="blocked-card">
+
+        <div class="icon">
+            🚫
+        </div>
+
+        <h1>
+            ACCESS PERMANENTLY BLOCKED
+        </h1>
+
+        <div class="warning">
+
+            YOUR IP HAS BEEN PERMANENTLY BLOCKED
+
+            <br>
+
+            DUE TO SUSPICIOUS ACTIVITY.
+
+        </div>
+
+        <div class="message">
+
+            HoneyShield Deception Shield has detected
+            multiple unauthorized authentication attempts.
+
+            <br><br>
+
+            Further access from this IP address
+            has been denied.
+
+        </div>
+
+        <div
+            class="status"
+            id="ipStatus"
+        >
+            🚨 SECURITY BLOCK ACTIVE
+        </div>
+
+        <div class="footer">
+
+            HONEYSHIELD SECURITY SYSTEM
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

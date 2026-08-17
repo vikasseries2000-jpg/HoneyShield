@@ -1,245 +1,1475 @@
-const SUPABASE_URL = "https://tvhuflxhzaulpoojdfeu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVmbHhoemF1bHBvb2pkZmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMzk1MTgsImV4cCI6MjA1NjkxNTUxOH0.K267fLlsg_zY5zMvS9PZzXjDLOqC1L5U2K3M0aM_u_k";
-
-const supabase = (typeof window !== 'undefined' && window.supabase) 
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
-    : null;
+// ============================================================
+// HONEYSHIELD FRONTEND
+// FINAL STABLE VERSION
+// ============================================================
 
 let attackChartInstance = null;
-let audioCtx = null;
 
-// 🔊 Beep Sound Function
-function playBeepSound(times = 1) {
+let sirenEnabled = true;
+
+let audioContext = null;
+
+
+// ============================================================
+// AUDIO / SIREN
+// ============================================================
+
+async function initAudio() {
+
     try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContext) {
+            return false;
         }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+
+        if (!audioContext) {
+
+            audioContext =
+                new AudioContext();
+
         }
 
-        let delay = 0;
-        for (let i = 0; i < times; i++) {
-            setTimeout(() => {
-                const oscillator = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+        if (
+            audioContext.state ===
+            "suspended"
+        ) {
 
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            await audioContext.resume();
 
-                oscillator.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.15);
-            }, delay);
-
-            delay += 300;
         }
-    } catch (e) {
-        console.log("Audio Error:", e);
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Audio initialization failed:",
+            error
+        );
+
+        return false;
+
     }
+
 }
 
-async function fetchClientIP() {
+
+async function playBeepSound(times = 3) {
+
+    if (!sirenEnabled) {
+        return;
+    }
+
     try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        return data.ip;
-    } catch (e) {
-        return '127.0.0.1';
-    }
-}
 
-async function getBlockedIPsSet() {
-    if (!supabase) return new Set();
-    try {
-        const { data } = await supabase.from('blocked_ips').select('ip');
-        return new Set((data || []).map(row => row.ip));
-    } catch (e) {
-        return new Set();
-    }
-}
+        const ready =
+            await initAudio();
 
-async function getIPAttackCount(ip) {
-    if (!supabase) return 0;
-    try {
-        const { data } = await supabase.from('threat_logs').select('id').eq('ip_address', ip);
-        return data ? data.length : 0;
-    } catch (e) {
-        return 0;
-    }
-}
+        if (!ready) {
+            return;
+        }
 
-// 📊 Pie Chart
-function renderPieChart(sqli, xss, brute) {
-    const canvas = document.getElementById('attackChart');
-    if (!canvas || typeof Chart === 'undefined') return;
+        for (
+            let i = 0;
+            i < times;
+            i++
+        ) {
 
-    const ctx = canvas.getContext('2d');
-    if (attackChartInstance) attackChartInstance.destroy();
+            if (
+                audioContext.state ===
+                "suspended"
+            ) {
 
-    const total = sqli + xss + brute;
+                await audioContext.resume();
 
-    attackChartInstance = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: total > 0 ? ['SQLi Attack', 'XSS Attack', 'Brute Force / Bad Pass'] : ['No Attacks Yet'],
-            datasets: [{
-                data: total > 0 ? [sqli, xss, brute] : [1],
-                backgroundColor: total > 0 ? ['#ef4444', '#eab308', '#38bdf8'] : ['#334155'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
             }
+
+            const oscillator =
+                audioContext.createOscillator();
+
+            const gain =
+                audioContext.createGain();
+
+
+            oscillator.type =
+                "square";
+
+            oscillator.frequency.value =
+                900;
+
+
+            gain.gain.setValueAtTime(
+                0.12,
+                audioContext.currentTime
+            );
+
+
+            oscillator.connect(gain);
+
+            gain.connect(
+                audioContext.destination
+            );
+
+
+            oscillator.start();
+
+            oscillator.stop(
+                audioContext.currentTime +
+                0.18
+            );
+
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        280
+                    )
+            );
+
         }
-    });
-}
 
-// Load Dashboard Data
-async function loadDashboard() {
-    if (!supabase) return;
+    } catch (error) {
 
-    const blockedSet = await getBlockedIPsSet();
-    const { data: logs } = await supabase.from('threat_logs').select('*').order('created_at', { ascending: false });
+        console.warn(
+            "Siren unavailable:",
+            error
+        );
 
-    if (!logs) return;
-
-    document.getElementById('totalAttacks').innerText = logs.length;
-    document.getElementById('blockedCount').innerText = blockedSet.size;
-
-    const blockedContainer = document.getElementById('blockedIpList');
-    if (blockedSet.size === 0) {
-        blockedContainer.innerHTML = 'No IPs currently blacklisted.';
-    } else {
-        blockedContainer.innerHTML = Array.from(blockedSet).map(ip => `<span style="background:#7f1d1d; color:#fca5a5; padding:3px 8px; border-radius:4px; margin-right:5px; font-family:monospace;">${ip}</span>`).join('');
     }
 
-    let sqli = 0, xss = 0, brute = 0;
-    logs.forEach(log => {
-        const type = (log.threat_type || '').toLowerCase();
-        if (type.includes('sqli') || type.includes('sql')) sqli++;
-        else if (type.includes('xss')) xss++;
-        else brute++;
-    });
-
-    renderPieChart(sqli, xss, brute);
-
-    const tableBody = document.getElementById('logsTable');
-    if (!tableBody) return;
-    tableBody.innerHTML = '';
-
-    logs.forEach(log => {
-        const isBlocked = blockedSet.has(log.ip_address);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${new Date(log.created_at).toLocaleTimeString()}</td>
-            <td style="color: #f43f5e; font-weight: bold;">${log.ip_address}</td>
-            <td style="color: #eab308;">${log.threat_type || 'Brute Force'}</td>
-            <td style="color: #38bdf8;">${log.user_attempted || 'N/A'}</td>
-            <td><span style="background: ${isBlocked ? '#ef4444' : '#334155'}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${isBlocked ? 'BLOCKED' : 'LOGGED'}</span></td>
-            <td><button onclick="toggleBlock('${log.ip_address}')" style="background:#ef4444; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer;">${isBlocked ? 'Unblock' : 'Block'}</button></td>
-        `;
-        tableBody.appendChild(row);
-    });
 }
+
+
+// ============================================================
+// SIREN BUTTON
+// ============================================================
+
+function createSirenButton() {
+
+    if (
+        document.getElementById(
+            "sirenBtn"
+        )
+    ) {
+        return;
+    }
+
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+
+    button.id =
+        "sirenBtn";
+
+
+    button.innerHTML =
+        "🔊 Siren ON";
+
+
+    button.style.cssText = `
+
+        position:fixed;
+
+        right:25px;
+
+        bottom:25px;
+
+        z-index:999999;
+
+        padding:12px 20px;
+
+        border:none;
+
+        border-radius:8px;
+
+        background:#16a34a;
+
+        color:white;
+
+        font-weight:bold;
+
+        cursor:pointer;
+
+        box-shadow:
+            0 5px 20px rgba(0,0,0,.5);
+
+    `;
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            sirenEnabled =
+                !sirenEnabled;
+
+
+            if (sirenEnabled) {
+
+                button.innerHTML =
+                    "🔊 Siren ON";
+
+                button.style.background =
+                    "#16a34a";
+
+                await initAudio();
+
+                playBeepSound(1);
+
+            } else {
+
+                button.innerHTML =
+                    "🔇 Siren OFF";
+
+                button.style.background =
+                    "#64748b";
+
+            }
+
+        }
+    );
+
+
+    document.body.appendChild(
+        button
+    );
+
+}
+
+
+// ============================================================
+// BLOCKED FULL SCREEN
+// ============================================================
+
+function showPermanentBlockScreen(ip) {
+
+    document.body.innerHTML = `
+
+        <div style="
+            position:fixed;
+            inset:0;
+            background:
+                radial-gradient(
+                    circle at center,
+                    #450a0a 0%,
+                    #180000 45%,
+                    #050000 100%
+                );
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            font-family:Segoe UI,Arial,sans-serif;
+            z-index:9999999;
+            padding:30px;
+        ">
+
+            <div style="
+                width:min(700px,100%);
+                border:2px solid #ef4444;
+                border-radius:18px;
+                padding:45px 30px;
+                background:rgba(0,0,0,.45);
+                box-shadow:
+                    0 0 50px rgba(239,68,68,.35);
+            ">
+
+                <div style="
+                    font-size:72px;
+                    margin-bottom:20px;
+                ">
+                    🚨
+                </div>
+
+                <h1 style="
+                    color:#f87171;
+                    font-size:34px;
+                    margin-bottom:18px;
+                ">
+                    ACCESS PERMANENTLY BLOCKED
+                </h1>
+
+                <h2 style="
+                    color:#fecaca;
+                    font-size:22px;
+                    margin-bottom:25px;
+                ">
+                    Your IP has been permanently blocked
+                    due to suspicious activity.
+                </h2>
+
+                <div style="
+                    background:#1f2937;
+                    padding:15px;
+                    border-radius:8px;
+                    margin-bottom:25px;
+                    font-family:monospace;
+                    color:#fca5a5;
+                ">
+                    Detected IP:
+                    <strong>
+                        ${escapeHTML(ip || "unknown")}
+                    </strong>
+                </div>
+
+                <div style="
+                    color:#94a3b8;
+                    font-size:14px;
+                ">
+                    HoneyShield Security Engine
+                    <br>
+                    Intrusion prevention system activated.
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    playBeepSound(8);
+
+}
+
+
+// ============================================================
+// LOGIN STATUS
+// ============================================================
+
+function showLoginStatus(
+    message,
+    type = "warning"
+) {
+
+    const status =
+        document.getElementById(
+            "status-message"
+        ) ||
+        document.getElementById(
+            "statusMessage"
+        );
+
+
+    if (!status) {
+
+        console.log(message);
+
+        return;
+
+    }
+
+
+    status.style.display =
+        "block";
+
+    status.innerText =
+        message;
+
+
+    if (type === "success") {
+
+        status.style.background =
+            "#14532d";
+
+        status.style.color =
+            "#86efac";
+
+    } else {
+
+        status.style.background =
+            "#7f1d1d";
+
+        status.style.color =
+            "#fecaca";
+
+    }
+
+}
+
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+async function handleLogin(event) {
+
+    event.preventDefault();
+
+
+    const usernameInput =
+        document.getElementById(
+            "username"
+        );
+
+
+    const passwordInput =
+        document.getElementById(
+            "password"
+        );
+
+
+    if (
+        !usernameInput ||
+        !passwordInput
+    ) {
+
+        return;
+
+    }
+
+
+    const username =
+        usernameInput.value.trim();
+
+
+    const password =
+        passwordInput.value;
+
+
+    if (
+        !username ||
+        !password
+    ) {
+
+        showLoginStatus(
+            "Username and password are required."
+        );
+
+        return;
+
+    }
+
+
+    // User gesture initializes browser audio.
+    await initAudio();
+
+
+    const loginButton =
+        document.querySelector(
+            "#login-form button[type='submit']"
+        );
+
+
+    if (loginButton) {
+
+        loginButton.disabled =
+            true;
+
+        loginButton.innerText =
+            "Authenticating...";
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/auth/login",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            username,
+
+                            password
+
+                        })
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "HoneyShield:",
+            result
+        );
+
+
+        // ====================================================
+        // PERMANENTLY BLOCKED
+        // ====================================================
+
+        if (
+            result.mode ===
+            "BLOCKED"
+        ) {
+
+            await playBeepSound(8);
+
+            showPermanentBlockScreen(
+                result.ip
+            );
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // SUCCESS
+        // ====================================================
+
+        if (
+            result.success === true &&
+            result.mode === "REAL"
+        ) {
+
+            showLoginStatus(
+                "✅ Authentication successful. Opening dashboard...",
+                "success"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    window.location.href =
+                        "/dashboard";
+
+                },
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // SUSPICIOUS
+        // ====================================================
+
+        if (
+            result.mode ===
+            "SUSPICIOUS"
+        ) {
+
+            await playBeepSound(2);
+
+
+            showLoginStatus(
+
+                `⚠️ Suspicious activity detected. Attempt ${result.attempts} of 3.`
+
+            );
+
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // NORMAL FAILED
+        // ====================================================
+
+        showLoginStatus(
+
+            result.message ||
+            "❌ Invalid username or password."
+
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Login failed:",
+            error
+        );
+
+
+        showLoginStatus(
+            "❌ Cannot connect to HoneyShield backend."
+        );
+
+
+    } finally {
+
+        if (loginButton) {
+
+            loginButton.disabled =
+                false;
+
+            loginButton.innerText =
+                "Login to Dashboard";
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD LOGS
+// ============================================================
+
+async function loadLogs() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/logs"
+            );
+
+
+        const result =
+            await response.json();
+
+
+        return Array.isArray(
+            result.logs
+        )
+            ? result.logs
+            : [];
+
+
+    } catch (error) {
+
+        console.error(
+            "Logs error:",
+            error
+        );
+
+        return [];
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD BLOCKED IPS FROM SERVER
+// ============================================================
+
+async function loadBlockedIPs() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/blocked-ips"
+            );
+
+
+        const result =
+            await response.json();
+
+
+        return Array.isArray(
+            result.blockedIPs
+        )
+            ? result.blockedIPs
+            : [];
+
+
+    } catch (error) {
+
+        console.error(
+            "Blocked IP API error:",
+            error
+        );
+
+        return [];
+
+    }
+
+}
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHTML(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+// ============================================================
+// FIXED LOG TIME
+// ============================================================
+
+function getLogTime(log) {
+
+    const value =
+        log.created_at;
+
+
+    if (!value) {
+
+        return "Time unavailable";
+
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (
+        isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return escapeHTML(
+            value
+        );
+
+    }
+
+
+    return date.toLocaleString();
+
+}
+
+
+// ============================================================
+// RENDER LOGS
+// ============================================================
+
+function renderLogs(logs) {
+
+    const tableBody =
+        document.getElementById(
+            "logsTable"
+        );
+
+
+    if (!tableBody) {
+        return;
+    }
+
+
+    if (!logs.length) {
+
+        tableBody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="7"
+                    style="
+                        text-align:center;
+                        padding:20px;
+                        color:#64748b;
+                    "
+                >
+                    No security attacks recorded yet.
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tableBody.innerHTML = "";
+
+
+    logs.forEach(log => {
+
+        const row =
+            document.createElement(
+                "tr"
+            );
+
+
+        const ip =
+            log.ip || "-";
+
+
+        const type =
+            log.type || "UNKNOWN";
+
+
+        const username =
+            log.username || "-";
+
+
+        const password =
+            log.password || "-";
+
+
+        const status =
+            log.status || "LOGGED";
+
+
+        const time =
+            getLogTime(log);
+
+
+        const attempts =
+            log.attemptCount || "-";
+
+
+        let bg =
+            "#334155";
+
+
+        if (
+            status === "BLOCKED"
+        ) {
+
+            bg = "#dc2626";
+
+        } else if (
+            status === "ATTACKER" ||
+            status ===
+                "REDIRECTED_TO_DECOY"
+        ) {
+
+            bg = "#dc2626";
+
+        } else if (
+            status === "SUSPICIOUS"
+        ) {
+
+            bg = "#d97706";
+
+        } else if (
+            status === "SUCCESS"
+        ) {
+
+            bg = "#16a34a";
+
+        }
+
+
+        row.innerHTML = `
+
+            <td>
+                ${escapeHTML(time)}
+            </td>
+
+            <td style="
+                font-family:monospace;
+                color:#f43f5e;
+            ">
+                ${escapeHTML(ip)}
+            </td>
+
+            <td style="
+                color:#eab308;
+                font-weight:bold;
+            ">
+                ${escapeHTML(type)}
+            </td>
+
+            <td style="
+                color:#38bdf8;
+            ">
+                ${escapeHTML(username)}
+            </td>
+
+            <td style="
+                color:#f87171;
+                font-family:monospace;
+                font-weight:bold;
+            ">
+                ${escapeHTML(password)}
+            </td>
+
+            <td>
+
+                <span style="
+                    padding:4px 8px;
+                    border-radius:4px;
+                    background:${bg};
+                    color:white;
+                    font-size:11px;
+                ">
+                    ${escapeHTML(status)}
+                </span>
+
+            </td>
+
+            <td>
+                ${escapeHTML(attempts)}
+            </td>
+
+        `;
+
+
+        tableBody.appendChild(
+            row
+        );
+
+    });
+
+}
+
+
+// ============================================================
+// RENDER BLOCKED IPS
+// ============================================================
+
+function renderBlockedIPs(ips) {
+
+    const count =
+        document.getElementById(
+            "blockedCount"
+        );
+
+
+    if (count) {
+
+        count.innerText =
+            ips.length;
+
+    }
+
+
+    const list =
+        document.getElementById(
+            "blockedIpList"
+        );
+
+
+    if (!list) {
+        return;
+    }
+
+
+    if (!ips.length) {
+
+        list.innerHTML =
+            "No IPs blacklisted.";
+
+        return;
+
+    }
+
+
+    list.innerHTML =
+        ips.map(
+            ip => `
+
+                <span style="
+                    background:#7f1d1d;
+                    color:#fca5a5;
+                    padding:5px 9px;
+                    border-radius:4px;
+                    margin:3px;
+                    display:inline-block;
+                    font-family:monospace;
+                ">
+                    ${escapeHTML(ip)}
+                </span>
+
+            `
+        ).join("");
+
+}
+
+
+// ============================================================
+// GET REAL ATTACK LOGS
+// ============================================================
+//
+// Only these log types represent actual attack attempts.
+//
+// LOGIN_ATTEMPT:
+//   Attempt 1 and Attempt 2
+//
+// IP_BLOCKED:
+//   Third failed attempt
+//
+// BLOCKED_REQUEST:
+//   Already-blocked IP tried again.
+//   NOT a new attack attempt.
+//
+// DECOY_REDIRECT:
+//   Security action generated by the third attempt.
+//   NOT a separate attack.
+//
+// ============================================================
+
+function getAttackLogs(logs) {
+
+    return logs.filter(log => {
+
+        return (
+            log.type === "LOGIN_ATTEMPT" ||
+            log.type === "IP_BLOCKED"
+        );
+
+    });
+
+}
+
+
+// ============================================================
+// ATTACK CHART
+// ============================================================
+
+function renderAttackChart(logs) {
+
+    const canvas =
+        document.getElementById(
+            "attackChart"
+        );
+
+
+    if (
+        !canvas ||
+        typeof Chart === "undefined"
+    ) {
+        return;
+    }
+
+
+    // Only count real attacks.
+    const attackLogs =
+        getAttackLogs(logs);
+
+
+    let sql = 0;
+
+    let xss = 0;
+
+    let brute = 0;
+
+
+    attackLogs.forEach(log => {
+
+        const type =
+            String(
+                log.type || ""
+            ).toLowerCase();
+
+
+        if (
+            type.includes("sql")
+        ) {
+
+            sql++;
+
+        } else if (
+            type.includes("xss")
+        ) {
+
+            xss++;
+
+        } else {
+
+            // Login attempts and IP_BLOCKED
+            // belong to brute-force/login attacks.
+            brute++;
+
+        }
+
+    });
+
+
+    if (
+        attackChartInstance
+    ) {
+
+        attackChartInstance.destroy();
+
+    }
+
+
+    attackChartInstance =
+        new Chart(
+            canvas,
+            {
+
+                type:
+                    "pie",
+
+                data: {
+
+                    labels: [
+
+                        "SQL Injection",
+
+                        "XSS",
+
+                        "Brute Force / Login"
+
+                    ],
+
+                    datasets: [{
+
+                        data: [
+
+                            sql,
+
+                            xss,
+
+                            brute
+
+                        ],
+
+                        backgroundColor: [
+
+                            "#ef4444",
+
+                            "#eab308",
+
+                            "#38bdf8"
+
+                        ],
+
+                        borderWidth: 0
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+
+                            position:
+                                "right"
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+}
+
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+
+async function loadDashboard() {
+
+    const logs =
+        await loadLogs();
+
+
+    const blockedIPs =
+        await loadBlockedIPs();
+
+
+    // ========================================================
+    // TOTAL SUBMITTED ATTACKS
+    // ========================================================
+    //
+    // IMPORTANT:
+    // Do NOT use logs.length here.
+    //
+    // logs.length includes:
+    //
+    // BLOCKED_REQUEST
+    // DECOY_REDIRECT
+    //
+    // These are security events, not new attack attempts.
+    //
+    // ========================================================
+
+    const attackLogs =
+        getAttackLogs(logs);
+
+
+    const total =
+        document.getElementById(
+            "totalAttacks"
+        );
+
+
+    if (total) {
+
+        total.innerText =
+            attackLogs.length;
+
+    }
+
+
+    // ========================================================
+    // BLOCKED IP COUNT
+    // ========================================================
+
+    // Count comes from the actual server API.
+    renderBlockedIPs(
+        blockedIPs
+    );
+
+
+    // ========================================================
+    // LOG TABLE
+    // ========================================================
+
+    // Show all security events in the log table.
+    // This preserves the complete security history.
+    renderLogs(
+        logs
+    );
+
+
+    // ========================================================
+    // ATTACK CHART
+    // ========================================================
+
+    // Chart only counts actual attack events.
+    renderAttackChart(
+        logs
+    );
+
+}
+
+
+// ============================================================
+// REFRESH
+// ============================================================
+
+function setupRefreshButton() {
+
+    const button =
+        document.getElementById(
+            "refreshBtn"
+        );
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            loadDashboard
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// UNBLOCK ALL
+// ============================================================
 
 async function unblockAllIPs() {
-    if (!supabase) return;
-    await supabase.from('blocked_ips').delete().neq('ip', '0.0.0.0');
-    loadDashboard();
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/blocked-ips",
+                {
+                    method:
+                        "DELETE"
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "Unblock result:",
+            result
+        );
+
+
+        // Immediately update UI.
+        renderBlockedIPs([]);
+
+
+        await loadDashboard();
+
+
+    } catch (error) {
+
+        console.error(
+            "Unblock failed:",
+            error
+        );
+
+    }
+
 }
 
-async function toggleBlock(ip) {
-    if (!supabase) return;
-    const blockedSet = await getBlockedIPsSet();
-    if (blockedSet.has(ip)) {
-        await supabase.from('blocked_ips').delete().eq('ip', ip);
-    } else {
-        await supabase.from('blocked_ips').insert([{ ip }]);
-    }
-    loadDashboard();
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+function logout() {
+
+    window.location.href =
+        "/";
+
 }
 
-// Login Logic
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
 
-            const ip = await fetchClientIP();
-            const blockedSet = await getBlockedIPsSet();
-            const statusMsg = document.getElementById('status-message');
+// ============================================================
+// INIT
+// ============================================================
 
-            // 1. Agar IP pehle se blocked hai -> No Access
-            if (blockedSet.has(ip)) {
-                playBeepSound(3);
-                statusMsg.style.display = 'block';
-                statusMsg.style.background = '#7f1d1d';
-                statusMsg.style.color = '#fca5a5';
-                statusMsg.innerText = '🛑 ACCESS BLOCKED: Your IP is blacklisted due to multiple threats!';
-                return;
-            }
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
+        // Siren is optional frontend functionality.
+        createSirenButton();
 
-            // 2. Direct Redirect ONLY on Correct Credentials
-            if (username === 'admin' && password === 'admin123') {
-                window.location.href = '/dashboard';
-                return;
-            }
 
-            // 3. Failed Attempt / Threat Detection
-            let attackType = 'Brute Force / Bad Credentials';
-            if (username.includes("'") || username.toLowerCase().includes('or') || username.includes('--')) {
-                attackType = 'SQL Injection (SQLi)';
-            } else if (username.includes('<script>') || username.includes('javascript:')) {
-                attackType = 'Cross-Site Scripting (XSS)';
-            }
+        // ====================================================
+        // LOGIN
+        // ====================================================
 
-            const currentCount = (await getIPAttackCount(ip)) + 1;
-            const isBlocked = currentCount >= 3;
+        const loginForm =
+            document.getElementById(
+                "login-form"
+            ) ||
+            document.getElementById(
+                "loginForm"
+            );
 
-            // Block IP if threshold reached
-            if (isBlocked) {
-                await supabase.from('blocked_ips').insert([{ ip }]);
-            }
 
-            // Log attempt into threat_logs
-            await supabase.from('threat_logs').insert([{
-                ip_address: ip,
-                threat_type: attackType,
-                user_attempted: username,
-                attempts: currentCount,
-                created_at: new Date().toISOString()
-            }]);
+        if (loginForm) {
 
-            // 4. Sound Alerts (1 Beep for <3 attempts, 3 Beeps for Block)
-            if (isBlocked) {
-                playBeepSound(3);
-            } else {
-                playBeepSound(1);
-            }
+            loginForm.addEventListener(
+                "submit",
+                handleLogin
+            );
 
-            statusMsg.style.display = 'block';
-            statusMsg.style.background = isBlocked ? '#7f1d1d' : '#713f12';
-            statusMsg.style.color = isBlocked ? '#fca5a5' : '#fef08a';
-            statusMsg.innerText = isBlocked 
-                ? '🛑 ACCESS BLOCKED: 3 Bad Attempts Exceeded! IP Blacklisted.' 
-                : `⚠️ Invalid Credentials / Threat Detected! Attempt ${currentCount}/3`;
-        });
+        }
+
+
+        // ====================================================
+        // DASHBOARD
+        // ====================================================
+
+        if (
+            document.getElementById(
+                "logsTable"
+            )
+        ) {
+
+            loadDashboard();
+
+
+            setInterval(
+                loadDashboard,
+                5000
+            );
+
+        }
+
+
+        setupRefreshButton();
+
+
+        // ====================================================
+        // LOGOUT
+        // ====================================================
+
+        document
+            .querySelectorAll(
+                "#logoutBtn, .logout-btn"
+            )
+            .forEach(
+                button => {
+
+                    button.addEventListener(
+                        "click",
+                        logout
+                    );
+
+                }
+            );
+
     }
+);
 
-    if (document.getElementById('logsTable')) {
-        loadDashboard();
-        setInterval(loadDashboard, 4000);
-    }
-});
+
+// ============================================================
+// GLOBAL
+// ============================================================
+
+window.handleLogin =
+    handleLogin;
+
+window.loadDashboard =
+    loadDashboard;
+
+window.loadLogs =
+    loadLogs;
+
+window.logout =
+    logout;
+
+window.playBeepSound =
+    playBeepSound;
+
+window.unblockAllIPs =
+    unblockAllIPs;
+
+
+console.log(
+    "🛡️ HoneyShield app.js loaded."
+);

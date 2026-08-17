@@ -1,126 +1,301 @@
-const path = require('path');
-const fs = require('fs');
-const https = require('https');
+// ============================================================
+// HONEYSHIELD - ATTACK DETECTION & PERMANENT IP BLOCKING
+// ============================================================
 
-// Log file path in project root
-const logsFilePath = path.join(__dirname, '../telemetry_logs.json');
+const fs = require("fs");
+const path = require("path");
 
-// In-Memory Tracker to hold running risk score for each IP
-const ipRiskStore = {};
+const MAX_ATTEMPTS = 3;
 
-// Optional: Paste your Discord Webhook URL here if you want real alerts
-const DISCORD_WEBHOOK_URL = ""; 
+const BLOCK_FILE = path.join(
+    __dirname,
+    "blocked_ips.json"
+);
 
-// Helper to trigger external SOC Alert (Discord Webhook)
-function sendSOCAlert(eventData) {
-    if (!DISCORD_WEBHOOK_URL) return;
+const attempts = new Map();
 
-    const payload = JSON.stringify({
-        embeds: [{
-            title: "🚨 CRITICAL THREAT: IP BLACKLISTED",
-            color: 15158332, // Red
-            fields: [
-                { name: "Attacker Real IP", value: `\`${eventData.realIP}\``, inline: true },
-                { name: "Threat Vector", value: `\`${eventData.attackType}\``, inline: true },
-                { name: "Accumulated Risk", value: `\`${eventData.accumulatedRiskScore} / 100\``, inline: true },
-                { name: "Sinkhole Routed IP", value: `\`${eventData.spoofedFakeIP}\``, inline: true },
-                { name: "Threat Geo-Origin", value: `\`${eventData.geoMeta}\``, inline: true }
-            ],
-            footer: { text: "HoneyShield Automated Incident Response Engine" },
-            timestamp: new Date().toISOString()
-        }]
-    });
+let blockedIPs = new Set();
+
+
+// ============================================================
+// LOAD BLOCKED IPS
+// ============================================================
+
+function loadBlockedIPs() {
 
     try {
-        const url = new URL(DISCORD_WEBHOOK_URL);
-        const req = https.request({
-            hostname: url.hostname,
-            path: url.pathname + url.search,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(payload)
-            }
-        });
-        req.on('error', (e) => console.error("Webhook Alert Failed:", e.message));
-        req.write(payload);
-        req.end();
-    } catch (err) {
-        console.error("Webhook Execution Error:", err.message);
+
+        if (!fs.existsSync(BLOCK_FILE)) {
+            return;
+        }
+
+        const data = JSON.parse(
+            fs.readFileSync(
+                BLOCK_FILE,
+                "utf8"
+            )
+        );
+
+        if (Array.isArray(data)) {
+
+            blockedIPs = new Set(
+                data.map(normalizeIP)
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load blocked IPs:",
+            error
+        );
+
+        blockedIPs = new Set();
+
     }
 }
 
-function evaluateRiskAndSpoof(req, attackType, riskIncrement = 0) {
-    // 1. Get Real IP
-    let realIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    if (realIP === '::1' || realIP === '::ffff:127.0.0.1') {
-        realIP = '127.0.0.1';
+loadBlockedIPs();
+
+
+// ============================================================
+// SAVE BLOCKED IPS
+// ============================================================
+
+function saveBlockedIPs() {
+
+    try {
+
+        fs.writeFileSync(
+            BLOCK_FILE,
+            JSON.stringify(
+                Array.from(blockedIPs),
+                null,
+                2
+            ),
+            "utf8"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to save blocked IPs:",
+            error
+        );
+
+    }
+}
+
+
+// ============================================================
+// NORMALIZE IP
+// ============================================================
+
+function normalizeIP(ip) {
+
+    if (!ip) {
+        return "unknown";
     }
 
-    // 2. Initialize IP in tracker if missing
-    if (!ipRiskStore[realIP]) {
-        ipRiskStore[realIP] = { score: 0, alerted: false };
+    let value = String(ip)
+        .split(",")[0]
+        .trim();
+
+    if (value.startsWith("::ffff:")) {
+        value = value.substring(7);
     }
 
-    // 3. Increment Risk Score
-    ipRiskStore[realIP].score += riskIncrement;
-    const currentTotalRisk = ipRiskStore[realIP].score;
+    return value;
+}
 
-    // 4. Generate Random Spoofed IP & Synthetic Geo Location
-    const spoofedFakeIP = `10.${Math.floor(Math.random() * 200) + 10}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
-    const geoOrigins = ['RU-Moscow [AS12389]', 'CN-Beijing [AS4134]', 'US-Ashburn [AS16509]', 'NL-Amsterdam [AS60781]', 'BR-SaoPaulo [AS28573]'];
-    const geoMeta = geoOrigins[Math.floor(Math.random() * geoOrigins.length)];
 
-    // 5. Determine Blocked Status
-    const isBlocked = currentTotalRisk >= 80;
-    const currentStatus = isBlocked ? 'BLOCKED' : 'DECEPTION_ACTIVE';
+// ============================================================
+// CHECK BLOCKED
+// ============================================================
 
-    // 6. Create Telemetry Object
-    const eventData = {
-        timestamp: new Date().toISOString(),
-        realIP: realIP,
-        spoofedFakeIP: spoofedFakeIP,
-        attackType: attackType,
-        accumulatedRiskScore: currentTotalRisk,
-        status: currentStatus,
-        geoMeta: geoMeta,
-        userAgent: req.headers['user-agent'] || 'Unknown'
+function isBlocked(ip) {
+
+    ip = normalizeIP(ip);
+
+    return blockedIPs.has(ip);
+}
+
+
+// ============================================================
+// RECORD FAILED LOGIN
+// ============================================================
+
+function recordFailedAttempt(ip) {
+
+    ip = normalizeIP(ip);
+
+
+    // --------------------------------------------------------
+    // ALREADY BLOCKED
+    // --------------------------------------------------------
+
+    if (blockedIPs.has(ip)) {
+
+        return {
+
+            attempts:
+                attempts.get(ip) ||
+                MAX_ATTEMPTS,
+
+            suspicious: true,
+
+            attacker: true,
+
+            blocked: true
+
+        };
+
+    }
+
+
+    // --------------------------------------------------------
+    // INCREMENT
+    // --------------------------------------------------------
+
+    const current =
+        attempts.get(ip) || 0;
+
+    const newCount =
+        current + 1;
+
+    attempts.set(
+        ip,
+        newCount
+    );
+
+
+    // --------------------------------------------------------
+    // THIRD ATTEMPT = PERMANENT BLOCK
+    // --------------------------------------------------------
+
+    if (newCount >= MAX_ATTEMPTS) {
+
+        blockedIPs.add(ip);
+
+        saveBlockedIPs();
+
+        return {
+
+            attempts: newCount,
+
+            suspicious: true,
+
+            attacker: true,
+
+            blocked: true
+
+        };
+
+    }
+
+
+    // --------------------------------------------------------
+    // ATTEMPT 1 / 2
+    // --------------------------------------------------------
+
+    return {
+
+        attempts: newCount,
+
+        suspicious:
+            newCount >= 2,
+
+        attacker: false,
+
+        blocked: false
+
     };
 
-    // 7. Write to telemetry_logs.json
-    if (attackType !== 'PASSIVE_CHECK') {
-        try {
-            let logs = [];
-            if (fs.existsSync(logsFilePath)) {
-                const fileData = fs.readFileSync(logsFilePath, 'utf8');
-                logs = fileData ? JSON.parse(fileData) : [];
-            }
-            logs.push(eventData);
-            fs.writeFileSync(logsFilePath, JSON.stringify(logs, null, 2));
-        } catch (err) {
-            console.error("Telemetry File Error:", err);
-        }
-
-        // 8. Trigger Automated SOC Notification if newly blocked
-        if (isBlocked && !ipRiskStore[realIP].alerted) {
-            ipRiskStore[realIP].alerted = true;
-            sendSOCAlert(eventData);
-        }
-    }
-
-    return { eventData, isBlocked };
 }
 
-// Clear all blocked IPs from memory
-function clearRiskStore() {
-    for (let ip in ipRiskStore) {
-        delete ipRiskStore[ip];
-    }
-    return { success: true, message: "IP Risk Memory Cleared!" };
+
+// ============================================================
+// RESET ATTEMPTS
+// ============================================================
+
+function resetAttempts(ip) {
+
+    ip = normalizeIP(ip);
+
+    attempts.delete(ip);
+
 }
+
+
+// ============================================================
+// GET BLOCKED IPS
+// ============================================================
+
+function getBlockedIPs() {
+
+    return Array.from(
+        blockedIPs
+    );
+
+}
+
+
+// ============================================================
+// UNBLOCK ONE IP
+// ============================================================
+
+function unblockIP(ip) {
+
+    ip = normalizeIP(ip);
+
+    const existed =
+        blockedIPs.delete(ip);
+
+    attempts.delete(ip);
+
+    saveBlockedIPs();
+
+    return existed;
+
+}
+
+
+// ============================================================
+// CLEAR ALL BLOCKED IPS
+// ============================================================
+
+function clearBlockedIPs() {
+
+    blockedIPs.clear();
+
+    attempts.clear();
+
+    saveBlockedIPs();
+
+}
+
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = {
-    evaluateRiskAndSpoof,
-    logsFilePath,
-    clearRiskStore
+
+    MAX_ATTEMPTS,
+
+    normalizeIP,
+
+    isBlocked,
+
+    recordFailedAttempt,
+
+    resetAttempts,
+
+    getBlockedIPs,
+
+    unblockIP,
+
+    clearBlockedIPs
+
 };
