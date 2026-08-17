@@ -7,6 +7,35 @@ const supabase = (typeof window !== 'undefined' && window.supabase)
 
 let attackChartInstance = null;
 
+// 🔊 Function to play Beep Sound (Bina external file ke sound play karta hai)
+function playBeepSound(times = 1) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let delay = 0;
+
+        for (let i = 0; i < times; i++) {
+            setTimeout(() => {
+                const oscillator = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Sound Frequency (Hz)
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+                oscillator.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.15); // Beep duration
+            }, delay);
+
+            delay += 300; // Har beep ke beech ka gap (milliseconds)
+        }
+    } catch (e) {
+        console.log("Audio play error:", e);
+    }
+}
+
 async function fetchClientIP() {
     try {
         const res = await fetch('https://api.ipify.org?format=json');
@@ -37,7 +66,7 @@ async function getIPAttackCount(ip) {
     }
 }
 
-// Render Pie Chart for Attack Distribution
+// Render Pie Chart
 function renderPieChart(sqli, xss, brute) {
     const canvas = document.getElementById('attackChart');
     if (!canvas || typeof Chart === 'undefined') return;
@@ -144,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusMsg = document.getElementById('status-message');
 
             if (blockedSet.has(ip)) {
+                playBeepSound(3); // 🚨 Already blocked - 3 Beeps
                 statusMsg.style.display = 'block';
                 statusMsg.style.background = '#7f1d1d';
                 statusMsg.style.color = '#fca5a5';
@@ -154,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            // Correct Credentials Test
+            // Correct Credentials
             if (username === 'admin' && password === 'admin123') {
                 window.location.href = '/dashboard';
                 return;
@@ -182,6 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 attempts: currentCount,
                 created_at: new Date().toISOString()
             }]);
+
+            // 🔊 Sound Logic:
+            if (isBlocked) {
+                playBeepSound(3); // 🛑 3 Tries Exceed hone par 3 baar Beep sound bajega
+            } else {
+                playBeepSound(1); // ⚠️ Single invalid attempt par 1 baar Beep sound bajega
+            }
 
             statusMsg.style.display = 'block';
             statusMsg.style.background = isBlocked ? '#7f1d1d' : '#713f12';
