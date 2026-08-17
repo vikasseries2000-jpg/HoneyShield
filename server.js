@@ -3,11 +3,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Frontend static files serve karein
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Express v5 compatible fallback route
-app.get('(.*)', (req, res) => {
+// Express v5 compatible fallback route using RegExp literal
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
