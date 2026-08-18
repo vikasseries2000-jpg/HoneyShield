@@ -2,9 +2,7 @@
 // HONEYSHIELD SECURITY LOGGER
 // ============================================================
 
-const {
-    supabase
-} = require("./supabase");
+const { supabase } = require("./supabase");
 
 
 // ============================================================
@@ -20,46 +18,63 @@ let securityLogs = [];
 
 async function addLog(data = {}) {
 
-    const now =
-        new Date().toISOString();
-
+    const now = new Date().toISOString();
 
     const log = {
 
         id:
+            data.id ||
             Date.now() +
             "-" +
             Math.random()
                 .toString(36)
                 .substring(2, 8),
 
-        created_at:
-            now,
+        created_at: now,
 
-        type:
-            data.type ||
-            "UNKNOWN",
+        time:
+            data.time ||
+            now,
 
         ip:
             data.ip ||
             "unknown",
 
+        route:
+            data.route ||
+            "/api/auth/login",
+
+        type:
+            data.type ||
+            data.attack_type ||
+            "UNKNOWN",
+
         username:
             data.username ||
+            data.attempted_user ||
             "-",
 
         password:
             data.password !== undefined
                 ? String(data.password)
-                : "-",
+                : data.attempted_password !== undefined
+                    ? String(data.attempted_password)
+                    : "-",
 
         status:
             data.status ||
+            data.action ||
             "LOGGED",
 
-        attemptCount:
+        user_agent:
+            data.user_agent ||
+            "-",
+
+        attack_count:
             Number(
-                data.attemptCount || 0
+                data.attack_count ??
+                data.attackCount ??
+                0
             )
 
     };
@@ -69,9 +84,7 @@ async function addLog(data = {}) {
     // MEMORY
     // --------------------------------------------------------
 
-    securityLogs.unshift(
-        log
-    );
+    securityLogs.unshift(log);
 
 
     // --------------------------------------------------------
@@ -87,14 +100,38 @@ async function addLog(data = {}) {
                 id:
                     log.id,
 
+                time:
+                    log.time,
+
+                ip:
+                    log.ip,
+
+                route:
+                    log.route,
+
+                attack_type:
+                    log.type,
+
+                attempted_user:
+                    log.username,
+
+                attempted_password:
+                    log.password,
+
+                action:
+                    log.status,
+
+                user_agent:
+                    log.user_agent,
+
+                attack_count:
+                    log.attack_count,
+
                 created_at:
                     log.created_at,
 
                 type:
                     log.type,
-
-                ip:
-                    log.ip,
 
                 username:
                     log.username,
@@ -103,22 +140,15 @@ async function addLog(data = {}) {
                     log.password,
 
                 status:
-                    log.status,
-
-                attempt_count:
-                    log.attemptCount
+                    log.status
 
             };
 
 
-            const {
-                error
-            } =
+            const { error } =
                 await supabase
                     .from("threat_logs")
-                    .insert(
-                        payload
-                    );
+                    .insert(payload);
 
 
             if (error) {
@@ -149,7 +179,6 @@ async function addLog(data = {}) {
 
 
     return log;
-
 }
 
 
@@ -180,55 +209,69 @@ async function getLogs() {
 
             if (!error && Array.isArray(data)) {
 
-                return data.map(
-                    row => ({
+                return data.map(row => ({
 
-                        id:
-                            row.id,
+                    id:
+                        row.id,
 
-                        created_at:
-                            row.created_at,
+                    created_at:
+                        row.created_at,
 
-                        type:
-                            row.type ||
-                            "UNKNOWN",
+                    time:
+                        row.time ||
+                        row.created_at,
 
-                        ip:
-                            row.ip ||
-                            "unknown",
+                    ip:
+                        row.ip ||
+                        "unknown",
 
-                        username:
-                            row.username ||
-                            row.attempted_user ||
-                            "-",
+                    route:
+                        row.route ||
+                        "/api/auth/login",
 
-                        password:
-                            row.password ??
-                            row.attempted_pass ??
-                            "-",
+                    type:
+                        row.type ||
+                        row.attack_type ||
+                        "UNKNOWN",
 
-                        status:
-                            row.status ||
-                            row.action ||
-                            "LOGGED",
+                    username:
+                        row.username ||
+                        row.attempted_user ||
+                        "-",
 
-                        attemptCount:
-                            Number(
-                                row.attempt_count ||
-                                row.attack_count ||
-                                0
-                            )
+                    password:
+                        row.password ??
+                        row.attempted_password ??
+                        "-",
 
-                    })
-                );
+                    status:
+                        row.status ||
+                        row.action ||
+                        "LOGGED",
+
+                    user_agent:
+                        row.user_agent ||
+                        "-",
+
+                    attack_count:
+                        Number(
+                            row.attack_count ??
+                            0
+                        )
+
+                }));
 
             }
 
 
-            console.error(
-                "❌ Supabase get logs failed:",
-                error?.message
-            );
+            if (error) {
+
+                console.error(
+                    "❌ Supabase get logs failed:",
+                    error.message
+                );
+
+            }
 
         } catch (error) {
 
@@ -242,8 +285,11 @@ async function getLogs() {
     }
 
 
-    return securityLogs;
+    // --------------------------------------------------------
+    // MEMORY FALLBACK
+    // --------------------------------------------------------
 
+    return securityLogs;
 }
 
 
@@ -299,7 +345,6 @@ async function clearLogs() {
 
 
     return true;
-
 }
 
 
