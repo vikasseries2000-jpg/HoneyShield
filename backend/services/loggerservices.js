@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // HONEYSHIELD SECURITY LOGGER
 // ============================================================
 
@@ -154,7 +154,7 @@ async function addLog(data = {}) {
             if (error) {
 
                 console.error(
-                    "❌ Supabase log insert failed:",
+                    "âŒ Supabase log insert failed:",
                     error.message
                 );
 
@@ -163,7 +163,7 @@ async function addLog(data = {}) {
         } catch (error) {
 
             console.error(
-                "❌ Supabase logging error:",
+                "âŒ Supabase logging error:",
                 error.message
             );
 
@@ -173,7 +173,7 @@ async function addLog(data = {}) {
 
 
     console.log(
-        "📝 Security Log:",
+        "ðŸ“ Security Log:",
         log
     );
 
@@ -267,7 +267,7 @@ async function getLogs() {
             if (error) {
 
                 console.error(
-                    "❌ Supabase get logs failed:",
+                    "âŒ Supabase get logs failed:",
                     error.message
                 );
 
@@ -276,7 +276,7 @@ async function getLogs() {
         } catch (error) {
 
             console.error(
-                "❌ Supabase fetch error:",
+                "âŒ Supabase fetch error:",
                 error.message
             );
 
@@ -322,7 +322,7 @@ async function clearLogs() {
             if (error) {
 
                 console.error(
-                    "❌ Supabase clear logs failed:",
+                    "âŒ Supabase clear logs failed:",
                     error.message
                 );
 
@@ -333,7 +333,7 @@ async function clearLogs() {
         } catch (error) {
 
             console.error(
-                "❌ Supabase clear error:",
+                "âŒ Supabase clear error:",
                 error.message
             );
 
