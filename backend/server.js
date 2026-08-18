@@ -31,8 +31,7 @@ const path =
 const {
     login
 } =
-    require("./controllers/authcontroller");
-
+    require("./controllers/authController")
 
 const {
     getLogs,
