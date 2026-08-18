@@ -22,13 +22,7 @@ async function addLog(data = {}) {
 
     const log = {
 
-        id:
-            data.id ||
-            Date.now() +
-            "-" +
-            Math.random()
-                .toString(36)
-                .substring(2, 8),
+        id: data.id || Date.now(),
 
         created_at: now,
 
@@ -361,4 +355,5 @@ module.exports = {
     clearLogs
 
 };
+
 
