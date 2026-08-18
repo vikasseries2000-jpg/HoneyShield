@@ -94,19 +94,16 @@ async function playBeepSound(times = 3) {
             const gain =
                 audioContext.createGain();
 
-
             oscillator.type =
                 "square";
 
             oscillator.frequency.value =
                 900;
 
-
             gain.gain.setValueAtTime(
                 0.12,
                 audioContext.currentTime
             );
-
 
             oscillator.connect(gain);
 
@@ -114,14 +111,12 @@ async function playBeepSound(times = 3) {
                 audioContext.destination
             );
 
-
             oscillator.start();
 
             oscillator.stop(
                 audioContext.currentTime +
                 0.18
             );
-
 
             await new Promise(
                 resolve =>
@@ -159,39 +154,30 @@ function createSirenButton() {
         return;
     }
 
-
     const button =
         document.createElement(
             "button"
         );
 
-
     button.id =
         "sirenBtn";
-
 
     button.innerHTML =
         "🔊 Siren ON";
 
-
     button.style.cssText = `
 
         position:fixed;
-
         right:25px;
-
         bottom:25px;
-
         z-index:999999;
 
         padding:12px 20px;
 
         border:none;
-
         border-radius:8px;
 
         background:#16a34a;
-
         color:white;
 
         font-weight:bold;
@@ -203,14 +189,12 @@ function createSirenButton() {
 
     `;
 
-
     button.addEventListener(
         "click",
         async () => {
 
             sirenEnabled =
                 !sirenEnabled;
-
 
             if (sirenEnabled) {
 
@@ -237,7 +221,6 @@ function createSirenButton() {
         }
     );
 
-
     document.body.appendChild(
         button
     );
@@ -246,7 +229,7 @@ function createSirenButton() {
 
 
 // ============================================================
-// BLOCKED FULL SCREEN
+// PERMANENT BLOCK SCREEN
 // ============================================================
 
 function showPermanentBlockScreen(ip) {
@@ -256,6 +239,7 @@ function showPermanentBlockScreen(ip) {
         <div style="
             position:fixed;
             inset:0;
+
             background:
                 radial-gradient(
                     circle at center,
@@ -263,24 +247,39 @@ function showPermanentBlockScreen(ip) {
                     #180000 45%,
                     #050000 100%
                 );
+
             color:white;
+
             display:flex;
             align-items:center;
             justify-content:center;
+
             text-align:center;
-            font-family:Segoe UI,Arial,sans-serif;
+
+            font-family:
+                Segoe UI,
+                Arial,
+                sans-serif;
+
             z-index:9999999;
+
             padding:30px;
         ">
 
             <div style="
                 width:min(700px,100%);
+
                 border:2px solid #ef4444;
                 border-radius:18px;
+
                 padding:45px 30px;
-                background:rgba(0,0,0,.45);
+
+                background:
+                    rgba(0,0,0,.45);
+
                 box-shadow:
-                    0 0 50px rgba(239,68,68,.35);
+                    0 0 50px
+                    rgba(239,68,68,.35);
             ">
 
                 <div style="
@@ -309,25 +308,37 @@ function showPermanentBlockScreen(ip) {
 
                 <div style="
                     background:#1f2937;
+
                     padding:15px;
+
                     border-radius:8px;
+
                     margin-bottom:25px;
+
                     font-family:monospace;
+
                     color:#fca5a5;
                 ">
+
                     Detected IP:
+
                     <strong>
                         ${escapeHTML(ip || "unknown")}
                     </strong>
+
                 </div>
 
                 <div style="
                     color:#94a3b8;
                     font-size:14px;
                 ">
+
                     HoneyShield Security Engine
+
                     <br>
+
                     Intrusion prevention system activated.
+
                 </div>
 
             </div>
@@ -335,7 +346,6 @@ function showPermanentBlockScreen(ip) {
         </div>
 
     `;
-
 
     playBeepSound(8);
 
@@ -359,7 +369,6 @@ function showLoginStatus(
             "statusMessage"
         );
 
-
     if (!status) {
 
         console.log(message);
@@ -368,13 +377,11 @@ function showLoginStatus(
 
     }
 
-
     status.style.display =
         "block";
 
     status.innerText =
         message;
-
 
     if (type === "success") {
 
@@ -405,18 +412,15 @@ async function handleLogin(event) {
 
     event.preventDefault();
 
-
     const usernameInput =
         document.getElementById(
             "username"
         );
 
-
     const passwordInput =
         document.getElementById(
             "password"
         );
-
 
     if (
         !usernameInput ||
@@ -427,14 +431,11 @@ async function handleLogin(event) {
 
     }
 
-
     const username =
         usernameInput.value.trim();
 
-
     const password =
         passwordInput.value;
-
 
     if (
         !username ||
@@ -449,16 +450,15 @@ async function handleLogin(event) {
 
     }
 
-
-    // User gesture initializes browser audio.
     await initAudio();
-
 
     const loginButton =
         document.querySelector(
             "#login-form button[type='submit']"
+        ) ||
+        document.querySelector(
+            "#loginForm button[type='submit']"
         );
-
 
     if (loginButton) {
 
@@ -469,7 +469,6 @@ async function handleLogin(event) {
             "Authenticating...";
 
     }
-
 
     try {
 
@@ -500,10 +499,8 @@ async function handleLogin(event) {
                 }
             );
 
-
         const result =
             await response.json();
-
 
         console.log(
             "HoneyShield:",
@@ -545,7 +542,6 @@ async function handleLogin(event) {
                 "success"
             );
 
-
             setTimeout(
                 () => {
 
@@ -555,7 +551,6 @@ async function handleLogin(event) {
                 },
                 500
             );
-
 
             return;
 
@@ -573,13 +568,11 @@ async function handleLogin(event) {
 
             await playBeepSound(2);
 
-
             showLoginStatus(
 
-                `⚠️ Suspicious activity detected. Attempt ${result.attempts} of 3.`
+                `⚠️ Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
 
             );
-
 
             return;
 
@@ -597,7 +590,6 @@ async function handleLogin(event) {
 
         );
 
-
     } catch (error) {
 
         console.error(
@@ -605,11 +597,9 @@ async function handleLogin(event) {
             error
         );
 
-
         showLoginStatus(
             "❌ Cannot connect to HoneyShield backend."
         );
-
 
     } finally {
 
@@ -638,20 +628,34 @@ async function loadLogs() {
 
         const response =
             await fetch(
-                "/api/logs"
+                "/api/logs",
+                {
+                    cache:
+                        "no-store"
+                }
             );
 
+        if (!response.ok) {
+
+            throw new Error(
+                `Logs API returned ${response.status}`
+            );
+
+        }
 
         const result =
             await response.json();
 
+        console.log(
+            "HoneyShield Logs:",
+            result
+        );
 
         return Array.isArray(
             result.logs
         )
             ? result.logs
             : [];
-
 
     } catch (error) {
 
@@ -668,7 +672,7 @@ async function loadLogs() {
 
 
 // ============================================================
-// LOAD BLOCKED IPS FROM SERVER
+// LOAD BLOCKED IPS
 // ============================================================
 
 async function loadBlockedIPs() {
@@ -677,20 +681,34 @@ async function loadBlockedIPs() {
 
         const response =
             await fetch(
-                "/api/blocked-ips"
+                "/api/blocked-ips",
+                {
+                    cache:
+                        "no-store"
+                }
             );
 
+        if (!response.ok) {
+
+            throw new Error(
+                `Blocked IP API returned ${response.status}`
+            );
+
+        }
 
         const result =
             await response.json();
 
+        console.log(
+            "HoneyShield Blocked IPs:",
+            result
+        );
 
         return Array.isArray(
             result.blockedIPs
         )
             ? result.blockedIPs
             : [];
-
 
     } catch (error) {
 
@@ -740,14 +758,14 @@ function escapeHTML(value) {
 
 
 // ============================================================
-// FIXED LOG TIME
+// LOG TIME
 // ============================================================
 
 function getLogTime(log) {
 
     const value =
-        log.created_at;
-
+        log.created_at ||
+        log.time;
 
     if (!value) {
 
@@ -755,10 +773,8 @@ function getLogTime(log) {
 
     }
 
-
     const date =
         new Date(value);
-
 
     if (
         isNaN(
@@ -772,8 +788,118 @@ function getLogTime(log) {
 
     }
 
+    return escapeHTML(
+        date.toLocaleString()
+    );
 
-    return date.toLocaleString();
+}
+
+
+// ============================================================
+// NORMALIZE LOG
+// ============================================================
+
+function normalizeLog(log = {}) {
+
+    return {
+
+        id:
+            log.id || "-",
+
+        created_at:
+            log.created_at ||
+            log.time ||
+            null,
+
+        ip:
+            log.ip ||
+            "-",
+
+        type:
+            log.type ||
+            log.attack_type ||
+            "UNKNOWN",
+
+        username:
+            log.username ||
+            log.attempted_user ||
+            "-",
+
+        password:
+            log.password !== undefined
+                ? log.password
+                : (
+                    log.attempted_pass !== undefined
+                        ? log.attempted_pass
+                        : "-"
+                ),
+
+        status:
+            log.status ||
+            log.action ||
+            "LOGGED",
+
+        attemptCount:
+            log.attemptCount ??
+            log.attack_count ??
+            log.attempt_count ??
+            0
+
+    };
+
+}
+
+
+// ============================================================
+// GET REAL ATTACK LOGS
+// ============================================================
+//
+// REAL ATTACK EVENTS:
+//
+// LOGIN_ATTEMPT
+// IP_BLOCKED
+//
+// SECURITY EVENTS:
+//
+// DECOY_REDIRECT
+// BLOCKED_REQUEST
+//
+// ============================================================
+
+function getAttackLogs(logs) {
+
+    return logs.filter(
+        log => {
+
+            const type =
+                String(
+                    log.type ||
+                    log.attack_type ||
+                    ""
+                ).toUpperCase();
+
+            return (
+
+                type ===
+                    "LOGIN_ATTEMPT" ||
+
+                type ===
+                    "IP_BLOCKED" ||
+
+                type ===
+                    "SQL_INJECTION" ||
+
+                type ===
+                    "XSS" ||
+
+                type.includes(
+                    "BRUTE"
+                )
+
+            );
+
+        }
+    );
 
 }
 
@@ -789,11 +915,9 @@ function renderLogs(logs) {
             "logsTable"
         );
 
-
     if (!tableBody) {
         return;
     }
-
 
     if (!logs.length) {
 
@@ -805,11 +929,13 @@ function renderLogs(logs) {
                     colspan="7"
                     style="
                         text-align:center;
-                        padding:20px;
+                        padding:25px;
                         color:#64748b;
                     "
                 >
-                    No security attacks recorded yet.
+
+                    No security events recorded yet.
+
                 </td>
 
             </tr>
@@ -820,139 +946,227 @@ function renderLogs(logs) {
 
     }
 
-
     tableBody.innerHTML = "";
 
+    logs.forEach(
+        rawLog => {
 
-    logs.forEach(log => {
+            const log =
+                normalizeLog(
+                    rawLog
+                );
 
-        const row =
-            document.createElement(
-                "tr"
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+
+            // =================================================
+            // STATUS COLOR
+            // =================================================
+
+            let bg =
+                "#334155";
+
+            let statusIcon =
+                "ℹ️";
+
+            const status =
+                String(
+                    log.status
+                ).toUpperCase();
+
+            if (
+                status ===
+                "BLOCKED"
+            ) {
+
+                bg =
+                    "#dc2626";
+
+                statusIcon =
+                    "🚫";
+
+            } else if (
+                status ===
+                    "ATTACKER" ||
+                status ===
+                    "REDIRECTED_TO_DECOY"
+            ) {
+
+                bg =
+                    "#dc2626";
+
+                statusIcon =
+                    "🍯";
+
+            } else if (
+                status ===
+                "SUSPICIOUS"
+            ) {
+
+                bg =
+                    "#d97706";
+
+                statusIcon =
+                    "⚠️";
+
+            } else if (
+                status ===
+                "SUCCESS"
+            ) {
+
+                bg =
+                    "#16a34a";
+
+                statusIcon =
+                    "✅";
+
+            } else if (
+                status ===
+                "FAILED"
+            ) {
+
+                bg =
+                    "#7c3aed";
+
+                statusIcon =
+                    "❌";
+
+            }
+
+
+            // =================================================
+            // TYPE COLOR
+            // =================================================
+
+            let typeColor =
+                "#eab308";
+
+            const type =
+                String(
+                    log.type
+                ).toUpperCase();
+
+            if (
+                type ===
+                "IP_BLOCKED"
+            ) {
+
+                typeColor =
+                    "#f87171";
+
+            } else if (
+                type ===
+                "DECOY_REDIRECT"
+            ) {
+
+                typeColor =
+                    "#c084fc";
+
+            } else if (
+                type ===
+                "LOGIN_SUCCESS"
+            ) {
+
+                typeColor =
+                    "#4ade80";
+
+            } else if (
+                type ===
+                "LOGIN_ATTEMPT"
+            ) {
+
+                typeColor =
+                    "#fbbf24";
+
+            }
+
+
+            row.innerHTML = `
+
+                <td style="
+                    white-space:nowrap;
+                    color:#cbd5e1;
+                ">
+                    ${getLogTime(log)}
+                </td>
+
+                <td style="
+                    font-family:monospace;
+                    color:#f43f5e;
+                    font-weight:bold;
+                ">
+                    ${escapeHTML(log.ip)}
+                </td>
+
+                <td style="
+                    color:${typeColor};
+                    font-weight:bold;
+                ">
+                    ${escapeHTML(log.type)}
+                </td>
+
+                <td style="
+                    color:#38bdf8;
+                ">
+                    ${escapeHTML(log.username)}
+                </td>
+
+                <td style="
+                    color:#f87171;
+                    font-family:monospace;
+                    font-weight:bold;
+                ">
+                    ${escapeHTML(log.password)}
+                </td>
+
+                <td>
+
+                    <span style="
+                        display:inline-block;
+
+                        padding:5px 9px;
+
+                        border-radius:5px;
+
+                        background:${bg};
+
+                        color:white;
+
+                        font-size:11px;
+
+                        font-weight:bold;
+
+                        white-space:nowrap;
+                    ">
+
+                        ${statusIcon}
+                        ${escapeHTML(log.status)}
+
+                    </span>
+
+                </td>
+
+                <td style="
+                    text-align:center;
+                    font-weight:bold;
+                    color:#cbd5e1;
+                ">
+                    ${escapeHTML(
+                        log.attemptCount || "-"
+                    )}
+                </td>
+
+            `;
+
+            tableBody.appendChild(
+                row
             );
 
-
-        const ip =
-            log.ip || "-";
-
-
-        const type =
-            log.type || "UNKNOWN";
-
-
-        const username =
-            log.username || "-";
-
-
-        const password =
-            log.password || "-";
-
-
-        const status =
-            log.status || "LOGGED";
-
-
-        const time =
-            getLogTime(log);
-
-
-        const attempts =
-            log.attemptCount || "-";
-
-
-        let bg =
-            "#334155";
-
-
-        if (
-            status === "BLOCKED"
-        ) {
-
-            bg = "#dc2626";
-
-        } else if (
-            status === "ATTACKER" ||
-            status ===
-                "REDIRECTED_TO_DECOY"
-        ) {
-
-            bg = "#dc2626";
-
-        } else if (
-            status === "SUSPICIOUS"
-        ) {
-
-            bg = "#d97706";
-
-        } else if (
-            status === "SUCCESS"
-        ) {
-
-            bg = "#16a34a";
-
         }
-
-
-        row.innerHTML = `
-
-            <td>
-                ${escapeHTML(time)}
-            </td>
-
-            <td style="
-                font-family:monospace;
-                color:#f43f5e;
-            ">
-                ${escapeHTML(ip)}
-            </td>
-
-            <td style="
-                color:#eab308;
-                font-weight:bold;
-            ">
-                ${escapeHTML(type)}
-            </td>
-
-            <td style="
-                color:#38bdf8;
-            ">
-                ${escapeHTML(username)}
-            </td>
-
-            <td style="
-                color:#f87171;
-                font-family:monospace;
-                font-weight:bold;
-            ">
-                ${escapeHTML(password)}
-            </td>
-
-            <td>
-
-                <span style="
-                    padding:4px 8px;
-                    border-radius:4px;
-                    background:${bg};
-                    color:white;
-                    font-size:11px;
-                ">
-                    ${escapeHTML(status)}
-                </span>
-
-            </td>
-
-            <td>
-                ${escapeHTML(attempts)}
-            </td>
-
-        `;
-
-
-        tableBody.appendChild(
-            row
-        );
-
-    });
+    );
 
 }
 
@@ -968,7 +1182,6 @@ function renderBlockedIPs(ips) {
             "blockedCount"
         );
 
-
     if (count) {
 
         count.innerText =
@@ -976,82 +1189,58 @@ function renderBlockedIPs(ips) {
 
     }
 
-
     const list =
         document.getElementById(
             "blockedIpList"
         );
 
-
     if (!list) {
         return;
     }
 
-
     if (!ips.length) {
 
-        list.innerHTML =
-            "No IPs blacklisted.";
+        list.innerHTML = `
+            <span style="color:#94a3b8;">
+                No IPs blacklisted.
+            </span>
+        `;
 
         return;
 
     }
 
-
     list.innerHTML =
-        ips.map(
-            ip => `
+        ips
+            .map(
+                ip => `
 
-                <span style="
-                    background:#7f1d1d;
-                    color:#fca5a5;
-                    padding:5px 9px;
-                    border-radius:4px;
-                    margin:3px;
-                    display:inline-block;
-                    font-family:monospace;
-                ">
-                    ${escapeHTML(ip)}
-                </span>
+                    <span style="
+                        background:#7f1d1d;
 
-            `
-        ).join("");
+                        color:#fca5a5;
 
-}
+                        padding:6px 10px;
 
+                        border-radius:5px;
 
-// ============================================================
-// GET REAL ATTACK LOGS
-// ============================================================
-//
-// Only these log types represent actual attack attempts.
-//
-// LOGIN_ATTEMPT:
-//   Attempt 1 and Attempt 2
-//
-// IP_BLOCKED:
-//   Third failed attempt
-//
-// BLOCKED_REQUEST:
-//   Already-blocked IP tried again.
-//   NOT a new attack attempt.
-//
-// DECOY_REDIRECT:
-//   Security action generated by the third attempt.
-//   NOT a separate attack.
-//
-// ============================================================
+                        margin:3px;
 
-function getAttackLogs(logs) {
+                        display:inline-block;
 
-    return logs.filter(log => {
+                        font-family:monospace;
 
-        return (
-            log.type === "LOGIN_ATTEMPT" ||
-            log.type === "IP_BLOCKED"
-        );
+                        font-weight:bold;
+                    ">
 
-    });
+                        🚫
+                        ${escapeHTML(ip)}
+
+                    </span>
+
+                `
+            )
+            .join("");
 
 }
 
@@ -1067,56 +1256,73 @@ function renderAttackChart(logs) {
             "attackChart"
         );
 
-
     if (
         !canvas ||
-        typeof Chart === "undefined"
+        typeof Chart ===
+            "undefined"
     ) {
+
+        console.warn(
+            "Chart.js is not available."
+        );
+
         return;
+
     }
 
-
-    // Only count real attacks.
     const attackLogs =
-        getAttackLogs(logs);
+        getAttackLogs(
+            logs
+        );
+
+    let sql =
+        0;
+
+    let xss =
+        0;
+
+    let brute =
+        0;
 
 
-    let sql = 0;
+    attackLogs.forEach(
+        rawLog => {
 
-    let xss = 0;
+            const log =
+                normalizeLog(
+                    rawLog
+                );
 
-    let brute = 0;
-
-
-    attackLogs.forEach(log => {
-
-        const type =
-            String(
-                log.type || ""
-            ).toLowerCase();
+            const type =
+                String(
+                    log.type || ""
+                ).toLowerCase();
 
 
-        if (
-            type.includes("sql")
-        ) {
+            if (
+                type.includes(
+                    "sql"
+                )
+            ) {
 
-            sql++;
+                sql++;
 
-        } else if (
-            type.includes("xss")
-        ) {
+            } else if (
+                type.includes(
+                    "xss"
+                )
+            ) {
 
-            xss++;
+                xss++;
 
-        } else {
+            } else {
 
-            // Login attempts and IP_BLOCKED
-            // belong to brute-force/login attacks.
-            brute++;
+                brute++;
+
+            }
 
         }
-
-    });
+    );
 
 
     if (
@@ -1124,6 +1330,9 @@ function renderAttackChart(logs) {
     ) {
 
         attackChartInstance.destroy();
+
+        attackChartInstance =
+            null;
 
     }
 
@@ -1170,7 +1379,8 @@ function renderAttackChart(logs) {
 
                         ],
 
-                        borderWidth: 0
+                        borderWidth:
+                            0
 
                     }]
 
@@ -1178,16 +1388,25 @@ function renderAttackChart(logs) {
 
                 options: {
 
-                    responsive: true,
+                    responsive:
+                        true,
 
-                    maintainAspectRatio: false,
+                    maintainAspectRatio:
+                        false,
 
                     plugins: {
 
                         legend: {
 
                             position:
-                                "right"
+                                "right",
+
+                            labels: {
+
+                                color:
+                                    "#f8fafc"
+
+                            }
 
                         }
 
@@ -1207,98 +1426,321 @@ function renderAttackChart(logs) {
 
 async function loadDashboard() {
 
-    const logs =
-        await loadLogs();
+    try {
+
+        const [
+            logs,
+            blockedIPs
+        ] = await Promise.all([
+
+            loadLogs(),
+
+            loadBlockedIPs()
+
+        ]);
 
 
-    const blockedIPs =
-        await loadBlockedIPs();
+        // ====================================================
+        // REAL ATTACK COUNT
+        // ====================================================
+
+        const attackLogs =
+            getAttackLogs(
+                logs
+            );
+
+        const total =
+            document.getElementById(
+                "totalAttacks"
+            );
+
+        if (total) {
+
+            total.innerText =
+                attackLogs.length;
+
+        }
 
 
-    // ========================================================
-    // TOTAL SUBMITTED ATTACKS
-    // ========================================================
-    //
-    // IMPORTANT:
-    // Do NOT use logs.length here.
-    //
-    // logs.length includes:
-    //
-    // BLOCKED_REQUEST
-    // DECOY_REDIRECT
-    //
-    // These are security events, not new attack attempts.
-    //
-    // ========================================================
+        // ====================================================
+        // BLOCKED IPS
+        // ====================================================
 
-    const attackLogs =
-        getAttackLogs(logs);
-
-
-    const total =
-        document.getElementById(
-            "totalAttacks"
+        renderBlockedIPs(
+            blockedIPs
         );
 
 
-    if (total) {
+        // ====================================================
+        // ALL SECURITY EVENTS
+        // ====================================================
 
-        total.innerText =
-            attackLogs.length;
+        renderLogs(
+            logs
+        );
+
+
+        // ====================================================
+        // CHART
+        // ====================================================
+
+        renderAttackChart(
+            logs
+        );
+
+
+        console.log(
+            `HoneyShield Dashboard: ${attackLogs.length} attacks, ${logs.length} security events, ${blockedIPs.length} blocked IPs.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard loading failed:",
+            error
+        );
 
     }
-
-
-    // ========================================================
-    // BLOCKED IP COUNT
-    // ========================================================
-
-    // Count comes from the actual server API.
-    renderBlockedIPs(
-        blockedIPs
-    );
-
-
-    // ========================================================
-    // LOG TABLE
-    // ========================================================
-
-    // Show all security events in the log table.
-    // This preserves the complete security history.
-    renderLogs(
-        logs
-    );
-
-
-    // ========================================================
-    // ATTACK CHART
-    // ========================================================
-
-    // Chart only counts actual attack events.
-    renderAttackChart(
-        logs
-    );
 
 }
 
 
 // ============================================================
-// REFRESH
+// CSV EXPORT
 // ============================================================
 
-function setupRefreshButton() {
+async function exportLogsCSV() {
 
-    const button =
-        document.getElementById(
-            "refreshBtn"
+    try {
+
+        const response =
+            await fetch(
+                "/api/logs",
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Unable to fetch security logs."
+            );
+
+        }
+
+        const result =
+            await response.json();
+
+        const logs =
+            Array.isArray(
+                result.logs
+            )
+                ? result.logs
+                : [];
+
+
+        if (!logs.length) {
+
+            alert(
+                "No security logs available for export."
+            );
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // CSV HEADERS
+        // ====================================================
+
+        const headers = [
+
+            "ID",
+
+            "Created At",
+
+            "IP Address",
+
+            "Threat Type",
+
+            "Username",
+
+            "Password",
+
+            "Status",
+
+            "Attempt Count"
+
+        ];
+
+
+        // ====================================================
+        // CSV ESCAPE
+        // ====================================================
+
+        function escapeCSV(value) {
+
+            const text =
+                String(
+                    value ?? ""
+                );
+
+            return `"${text.replace(
+                /"/g,
+                '""'
+            )}"`;
+
+        }
+
+
+        // ====================================================
+        // CSV ROWS
+        // ====================================================
+
+        const rows =
+            logs.map(
+                rawLog => {
+
+                    const log =
+                        normalizeLog(
+                            rawLog
+                        );
+
+                    return [
+
+                        log.id,
+
+                        log.created_at,
+
+                        log.ip,
+
+                        log.type,
+
+                        log.username,
+
+                        log.password,
+
+                        log.status,
+
+                        log.attemptCount
+
+                    ]
+                        .map(
+                            escapeCSV
+                        )
+                        .join(",");
+
+                }
+            );
+
+
+        const csvContent = [
+
+            headers
+                .map(
+                    escapeCSV
+                )
+                .join(","),
+
+            ...rows
+
+        ].join("\r\n");
+
+
+        // ====================================================
+        // CREATE CSV FILE
+        // ====================================================
+
+        const blob =
+            new Blob(
+
+                [
+
+                    "\uFEFF",
+
+                    csvContent
+
+                ],
+
+                {
+
+                    type:
+                        "text/csv;charset=utf-8;"
+
+                }
+
+            );
+
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+
+        const timestamp =
+            new Date()
+                .toISOString()
+                .replace(
+                    /[:.]/g,
+                    "-"
+                );
+
+
+        link.href =
+            url;
+
+        link.download =
+            `HoneyShield_Security_Logs_${timestamp}.csv`;
+
+
+        document.body.appendChild(
+            link
         );
 
 
-    if (button) {
+        link.click();
 
-        button.addEventListener(
-            "click",
-            loadDashboard
+
+        document.body.removeChild(
+            link
+        );
+
+
+        URL.revokeObjectURL(
+            url
+        );
+
+
+        console.log(
+            `HoneyShield: Exported ${logs.length} security logs.`
+        );
+
+
+        alert(
+            `✅ CSV exported successfully.\n\n${logs.length} security events exported.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "CSV export failed:",
+            error
+        );
+
+        alert(
+            "❌ Unable to export security logs."
         );
 
     }
@@ -1314,14 +1756,35 @@ async function unblockAllIPs() {
 
     try {
 
+        const confirmed =
+            confirm(
+                "Are you sure you want to remove all blocked IPs?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+
         const response =
             await fetch(
                 "/api/blocked-ips",
                 {
+
                     method:
                         "DELETE"
+
                 }
             );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Unblock API returned ${response.status}`
+            );
+
+        }
 
 
         const result =
@@ -1334,11 +1797,17 @@ async function unblockAllIPs() {
         );
 
 
-        // Immediately update UI.
-        renderBlockedIPs([]);
+        renderBlockedIPs(
+            []
+        );
 
 
         await loadDashboard();
+
+
+        alert(
+            "✅ All blocked IPs have been reset."
+        );
 
 
     } catch (error) {
@@ -1346,6 +1815,10 @@ async function unblockAllIPs() {
         console.error(
             "Unblock failed:",
             error
+        );
+
+        alert(
+            "❌ Failed to reset blocked IPs."
         );
 
     }
@@ -1366,14 +1839,40 @@ function logout() {
 
 
 // ============================================================
-// INIT
+// REFRESH BUTTON
+// ============================================================
+
+function setupRefreshButton() {
+
+    const button =
+        document.getElementById(
+            "refreshBtn"
+        );
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            loadDashboard
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// INITIALIZATION
 // ============================================================
 
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-        // Siren is optional frontend functionality.
+        // ====================================================
+        // SIREN
+        // ====================================================
+
         createSirenButton();
 
 
@@ -1421,6 +1920,10 @@ document.addEventListener(
         }
 
 
+        // ====================================================
+        // REFRESH
+        // ====================================================
+
         setupRefreshButton();
 
 
@@ -1448,7 +1951,7 @@ document.addEventListener(
 
 
 // ============================================================
-// GLOBAL
+// GLOBAL FUNCTIONS
 // ============================================================
 
 window.handleLogin =
@@ -1469,7 +1972,10 @@ window.playBeepSound =
 window.unblockAllIPs =
     unblockAllIPs;
 
+window.exportLogsCSV =
+    exportLogsCSV;
+
 
 console.log(
-    "🛡️ HoneyShield app.js loaded."
+    "🛡️ HoneyShield app.js loaded successfully."
 );

@@ -5,12 +5,23 @@
 
 require("dotenv").config();
 
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const cookieParser = require("cookie-parser");
-const path = require("path");
+const express =
+    require("express");
+
+const cors =
+    require("cors");
+
+const helmet =
+    require("helmet");
+
+const morgan =
+    require("morgan");
+
+const cookieParser =
+    require("cookie-parser");
+
+const path =
+    require("path");
 
 
 // ============================================================
@@ -19,30 +30,36 @@ const path = require("path");
 
 const {
     login
-} = require("./controllers/authcontroller");
+} =
+    require("./controllers/authcontroller");
 
 
 const {
     getLogs,
     clearLogs
-} = require("./services/loggerservices");
+} =
+    require("./services/loggerservices");
 
 
 const {
     getBlockedIPs,
     unblockIP,
     clearBlockedIPs
-} = require("./detectionService");
+} =
+    require("./detectionService");
 
 
 // ============================================================
 // APP
 // ============================================================
 
-const app = express();
+const app =
+    express();
+
 
 const PORT =
-    process.env.PORT || 10000;
+    process.env.PORT ||
+    5000;
 
 
 // ============================================================
@@ -61,45 +78,57 @@ const FRONTEND_DIR =
 // MIDDLEWARE
 // ============================================================
 
-app.use(cors());
+app.use(
+    cors()
+);
 
 app.use(
     helmet({
-        contentSecurityPolicy: false
+        contentSecurityPolicy:
+            false
     })
 );
 
-app.use(morgan("dev"));
+app.use(
+    morgan("dev")
+);
 
-app.use(cookieParser());
+app.use(
+    cookieParser()
+);
 
 app.use(
     express.json({
-        limit: "1mb"
+        limit:
+            "1mb"
     })
 );
 
 app.use(
     express.urlencoded({
-        extended: true
+        extended:
+            true
     })
 );
 
 
 // ============================================================
-// ROOT = LOGIN
+// ROOT
 // ============================================================
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    res.sendFile(
-        path.join(
-            FRONTEND_DIR,
-            "login.html"
-        )
-    );
+        res.sendFile(
+            path.join(
+                FRONTEND_DIR,
+                "login.html"
+            )
+        );
 
-});
+    }
+);
 
 
 // ============================================================
@@ -194,14 +223,16 @@ app.post(
 
 app.get(
     "/api/logs",
-    (req, res) => {
+    async (req, res) => {
 
         const logs =
-            getLogs();
+            await getLogs();
+
 
         res.json({
 
-            success: true,
+            success:
+                true,
 
             count:
                 logs.length,
@@ -220,16 +251,20 @@ app.get(
 
 app.delete(
     "/api/logs",
-    (req, res) => {
+    async (req, res) => {
 
-        clearLogs();
+        const success =
+            await clearLogs();
+
 
         res.json({
 
-            success: true,
+            success,
 
             message:
-                "Security logs cleared."
+                success
+                    ? "Security logs cleared."
+                    : "Unable to clear security logs."
 
         });
 
@@ -248,9 +283,11 @@ app.get(
         const ips =
             getBlockedIPs();
 
+
         res.json({
 
-            success: true,
+            success:
+                true,
 
             count:
                 ips.length,
@@ -277,17 +314,21 @@ app.delete(
                 req.params.ip
             );
 
+
         const removed =
             unblockIP(ip);
 
+
         res.json({
 
-            success: true,
+            success:
+                true,
 
             removed,
 
             count:
-                getBlockedIPs().length,
+                getBlockedIPs()
+                    .length,
 
             blockedIPs:
                 getBlockedIPs()
@@ -308,18 +349,152 @@ app.delete(
 
         clearBlockedIPs();
 
+
         res.json({
 
-            success: true,
+            success:
+                true,
 
-            count: 0,
+            count:
+                0,
 
-            blockedIPs: [],
+            blockedIPs:
+                [],
 
             message:
                 "All blocked IPs have been unblocked."
 
         });
+
+    }
+);
+
+
+// ============================================================
+// CSV EXPORT
+// ============================================================
+
+app.get(
+    "/api/logs/export",
+    async (req, res) => {
+
+        try {
+
+            const logs =
+                await getLogs();
+
+
+            const headers = [
+
+                "id",
+                "created_at",
+                "ip",
+                "type",
+                "username",
+                "password",
+                "status",
+                "attempt_count"
+
+            ];
+
+
+            const escapeCSV =
+                value => {
+
+                    const text =
+                        String(
+                            value ??
+                            ""
+                        );
+
+
+                    return `"${text
+                        .replace(
+                            /"/g,
+                            '""'
+                        )}"`;
+
+                };
+
+
+            const rows =
+                logs.map(
+                    log => [
+
+                        log.id,
+
+                        log.created_at,
+
+                        log.ip,
+
+                        log.type,
+
+                        log.username,
+
+                        log.password,
+
+                        log.status,
+
+                        log.attemptCount
+
+                    ]
+                        .map(
+                            escapeCSV
+                        )
+                        .join(",")
+                );
+
+
+            const csv =
+                [
+                    headers
+                        .map(
+                            escapeCSV
+                        )
+                        .join(","),
+
+                    ...rows
+
+                ].join("\r\n");
+
+
+            res.setHeader(
+                "Content-Type",
+                "text/csv; charset=utf-8"
+            );
+
+
+            res.setHeader(
+                "Content-Disposition",
+                'attachment; filename="honeyshield-security-logs.csv"'
+            );
+
+
+            return res.send(
+                csv
+            );
+
+        } catch (error) {
+
+            console.error(
+                "CSV export error:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Unable to export logs."
+
+                });
+
+        }
 
     }
 );
@@ -335,7 +510,8 @@ app.get(
 
         res.json({
 
-            success: true,
+            success:
+                true,
 
             app:
                 "HoneyShield",
@@ -347,7 +523,8 @@ app.get(
                 "Honeypot Shield Engine",
 
             timestamp:
-                new Date().toISOString()
+                new Date()
+                    .toISOString()
 
         });
 
@@ -363,7 +540,8 @@ app.use(
     express.static(
         FRONTEND_DIR,
         {
-            index: false
+            index:
+                false
         }
     )
 );
@@ -377,14 +555,16 @@ app.use(
     "/api",
     (req, res) => {
 
-        res.status(404).json({
+        res.status(404)
+            .json({
 
-            success: false,
+                success:
+                    false,
 
-            message:
-                "API endpoint not found."
+                message:
+                    "API endpoint not found."
 
-        });
+            });
 
     }
 );
@@ -413,27 +593,40 @@ app.use(
 // ============================================================
 
 app.use(
-    (error, req, res, next) => {
+    (
+        error,
+        req,
+        res,
+        next
+    ) => {
 
         console.error(
             "HoneyShield Error:",
             error
         );
 
-        if (res.headersSent) {
 
-            return next(error);
+        if (
+            res.headersSent
+        ) {
+
+            return next(
+                error
+            );
 
         }
 
-        res.status(500).json({
 
-            success: false,
+        res.status(500)
+            .json({
 
-            message:
-                "Internal HoneyShield server error."
+                success:
+                    false,
 
-        });
+                message:
+                    "Internal HoneyShield server error."
+
+            });
 
     }
 );
@@ -449,6 +642,7 @@ const server =
         () => {
 
             console.log("");
+
             console.log(
                 "=========================================="
             );
@@ -493,11 +687,14 @@ const server =
 // SHUTDOWN
 // ============================================================
 
-function shutdown(signal) {
+function shutdown(
+    signal
+) {
 
     console.log(
         `${signal} received.`
     );
+
 
     server.close(
         () => {
@@ -506,19 +703,29 @@ function shutdown(signal) {
                 "HoneyShield stopped."
             );
 
-            process.exit(0);
+
+            process.exit(
+                0
+            );
 
         }
     );
 
 }
 
+
 process.on(
     "SIGINT",
-    () => shutdown("SIGINT")
+    () =>
+        shutdown(
+            "SIGINT"
+        )
 );
 
 process.on(
     "SIGTERM",
-    () => shutdown("SIGTERM")
+    () =>
+        shutdown(
+            "SIGTERM"
+        )
 );

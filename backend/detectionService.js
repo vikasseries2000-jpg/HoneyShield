@@ -1,20 +1,35 @@
 // ============================================================
-// HONEYSHIELD - ATTACK DETECTION & PERMANENT IP BLOCKING
+// HONEYSHIELD ATTACK DETECTION
+// PERMANENT IP BLOCKING
 // ============================================================
 
-const fs = require("fs");
-const path = require("path");
+const fs =
+    require("fs");
 
-const MAX_ATTEMPTS = 3;
+const path =
+    require("path");
 
-const BLOCK_FILE = path.join(
-    __dirname,
-    "blocked_ips.json"
-);
 
-const attempts = new Map();
+const MAX_ATTEMPTS =
+    Number(
+        process.env.MAX_ATTEMPTS_THRESHOLD ||
+        3
+    );
 
-let blockedIPs = new Set();
+
+const BLOCK_FILE =
+    path.join(
+        __dirname,
+        "blocked_ips.json"
+    );
+
+
+const attempts =
+    new Map();
+
+
+let blockedIPs =
+    new Set();
 
 
 // ============================================================
@@ -25,22 +40,36 @@ function loadBlockedIPs() {
 
     try {
 
-        if (!fs.existsSync(BLOCK_FILE)) {
+        if (
+            !fs.existsSync(
+                BLOCK_FILE
+            )
+        ) {
+
             return;
+
         }
 
-        const data = JSON.parse(
-            fs.readFileSync(
-                BLOCK_FILE,
-                "utf8"
-            )
-        );
 
-        if (Array.isArray(data)) {
-
-            blockedIPs = new Set(
-                data.map(normalizeIP)
+        const data =
+            JSON.parse(
+                fs.readFileSync(
+                    BLOCK_FILE,
+                    "utf8"
+                )
             );
+
+
+        if (
+            Array.isArray(data)
+        ) {
+
+            blockedIPs =
+                new Set(
+                    data.map(
+                        normalizeIP
+                    )
+                );
 
         }
 
@@ -51,10 +80,13 @@ function loadBlockedIPs() {
             error
         );
 
-        blockedIPs = new Set();
+        blockedIPs =
+            new Set();
 
     }
+
 }
+
 
 loadBlockedIPs();
 
@@ -68,13 +100,19 @@ function saveBlockedIPs() {
     try {
 
         fs.writeFileSync(
+
             BLOCK_FILE,
+
             JSON.stringify(
-                Array.from(blockedIPs),
+                Array.from(
+                    blockedIPs
+                ),
                 null,
                 2
             ),
+
             "utf8"
+
         );
 
     } catch (error) {
@@ -85,6 +123,7 @@ function saveBlockedIPs() {
         );
 
     }
+
 }
 
 
@@ -95,18 +134,32 @@ function saveBlockedIPs() {
 function normalizeIP(ip) {
 
     if (!ip) {
+
         return "unknown";
+
     }
 
-    let value = String(ip)
-        .split(",")[0]
-        .trim();
 
-    if (value.startsWith("::ffff:")) {
-        value = value.substring(7);
+    let value =
+        String(ip)
+            .split(",")[0]
+            .trim();
+
+
+    if (
+        value.startsWith(
+            "::ffff:"
+        )
+    ) {
+
+        value =
+            value.substring(7);
+
     }
+
 
     return value;
+
 }
 
 
@@ -116,26 +169,31 @@ function normalizeIP(ip) {
 
 function isBlocked(ip) {
 
-    ip = normalizeIP(ip);
+    ip =
+        normalizeIP(ip);
 
     return blockedIPs.has(ip);
+
 }
 
 
 // ============================================================
-// RECORD FAILED LOGIN
+// RECORD FAILED ATTEMPT
 // ============================================================
 
 function recordFailedAttempt(ip) {
 
-    ip = normalizeIP(ip);
+    ip =
+        normalizeIP(ip);
 
 
     // --------------------------------------------------------
     // ALREADY BLOCKED
     // --------------------------------------------------------
 
-    if (blockedIPs.has(ip)) {
+    if (
+        blockedIPs.has(ip)
+    ) {
 
         return {
 
@@ -143,11 +201,17 @@ function recordFailedAttempt(ip) {
                 attempts.get(ip) ||
                 MAX_ATTEMPTS,
 
-            suspicious: true,
+            suspicious:
+                true,
 
-            attacker: true,
+            attacker:
+                true,
 
-            blocked: true
+            blocked:
+                true,
+
+            alreadyBlocked:
+                true
 
         };
 
@@ -159,10 +223,13 @@ function recordFailedAttempt(ip) {
     // --------------------------------------------------------
 
     const current =
-        attempts.get(ip) || 0;
+        attempts.get(ip) ||
+        0;
+
 
     const newCount =
         current + 1;
+
 
     attempts.set(
         ip,
@@ -171,24 +238,38 @@ function recordFailedAttempt(ip) {
 
 
     // --------------------------------------------------------
-    // THIRD ATTEMPT = PERMANENT BLOCK
+    // THIRD ATTEMPT
     // --------------------------------------------------------
 
-    if (newCount >= MAX_ATTEMPTS) {
+    if (
+        newCount >=
+        MAX_ATTEMPTS
+    ) {
 
-        blockedIPs.add(ip);
+        blockedIPs.add(
+            ip
+        );
+
 
         saveBlockedIPs();
 
+
         return {
 
-            attempts: newCount,
+            attempts:
+                newCount,
 
-            suspicious: true,
+            suspicious:
+                true,
 
-            attacker: true,
+            attacker:
+                true,
 
-            blocked: true
+            blocked:
+                true,
+
+            alreadyBlocked:
+                false
 
         };
 
@@ -201,14 +282,20 @@ function recordFailedAttempt(ip) {
 
     return {
 
-        attempts: newCount,
+        attempts:
+            newCount,
 
         suspicious:
             newCount >= 2,
 
-        attacker: false,
+        attacker:
+            false,
 
-        blocked: false
+        blocked:
+            false,
+
+        alreadyBlocked:
+            false
 
     };
 
@@ -221,9 +308,12 @@ function recordFailedAttempt(ip) {
 
 function resetAttempts(ip) {
 
-    ip = normalizeIP(ip);
+    ip =
+        normalizeIP(ip);
 
-    attempts.delete(ip);
+    attempts.delete(
+        ip
+    );
 
 }
 
@@ -247,14 +337,23 @@ function getBlockedIPs() {
 
 function unblockIP(ip) {
 
-    ip = normalizeIP(ip);
+    ip =
+        normalizeIP(ip);
+
 
     const existed =
-        blockedIPs.delete(ip);
+        blockedIPs.delete(
+            ip
+        );
 
-    attempts.delete(ip);
+
+    attempts.delete(
+        ip
+    );
+
 
     saveBlockedIPs();
+
 
     return existed;
 
@@ -262,7 +361,7 @@ function unblockIP(ip) {
 
 
 // ============================================================
-// CLEAR ALL BLOCKED IPS
+// CLEAR ALL
 // ============================================================
 
 function clearBlockedIPs() {

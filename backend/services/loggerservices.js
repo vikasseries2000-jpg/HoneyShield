@@ -2,6 +2,15 @@
 // HONEYSHIELD SECURITY LOGGER
 // ============================================================
 
+const {
+    supabase
+} = require("./supabase");
+
+
+// ============================================================
+// MEMORY FALLBACK
+// ============================================================
+
 let securityLogs = [];
 
 
@@ -9,7 +18,11 @@ let securityLogs = [];
 // ADD LOG
 // ============================================================
 
-function addLog(data = {}) {
+async function addLog(data = {}) {
+
+    const now =
+        new Date().toISOString();
+
 
     const log = {
 
@@ -20,10 +33,8 @@ function addLog(data = {}) {
                 .toString(36)
                 .substring(2, 8),
 
-        // IMPORTANT:
-        // Timestamp is created ONCE and never changed.
         created_at:
-            new Date().toISOString(),
+            now,
 
         type:
             data.type ||
@@ -37,7 +48,6 @@ function addLog(data = {}) {
             data.username ||
             "-",
 
-        // Demo honeypot only.
         password:
             data.password !== undefined
                 ? String(data.password)
@@ -48,12 +58,88 @@ function addLog(data = {}) {
             "LOGGED",
 
         attemptCount:
-            data.attemptCount || 0
+            Number(
+                data.attemptCount || 0
+            )
 
     };
 
 
-    securityLogs.unshift(log);
+    // --------------------------------------------------------
+    // MEMORY
+    // --------------------------------------------------------
+
+    securityLogs.unshift(
+        log
+    );
+
+
+    // --------------------------------------------------------
+    // SUPABASE
+    // --------------------------------------------------------
+
+    if (supabase) {
+
+        try {
+
+            const payload = {
+
+                id:
+                    log.id,
+
+                created_at:
+                    log.created_at,
+
+                type:
+                    log.type,
+
+                ip:
+                    log.ip,
+
+                username:
+                    log.username,
+
+                password:
+                    log.password,
+
+                status:
+                    log.status,
+
+                attempt_count:
+                    log.attemptCount
+
+            };
+
+
+            const {
+                error
+            } =
+                await supabase
+                    .from("threat_logs")
+                    .insert(
+                        payload
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "❌ Supabase log insert failed:",
+                    error.message
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "❌ Supabase logging error:",
+                error.message
+            );
+
+        }
+
+    }
 
 
     console.log(
@@ -71,7 +157,90 @@ function addLog(data = {}) {
 // GET LOGS
 // ============================================================
 
-function getLogs() {
+async function getLogs() {
+
+    if (supabase) {
+
+        try {
+
+            const {
+                data,
+                error
+            } =
+                await supabase
+                    .from("threat_logs")
+                    .select("*")
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    );
+
+
+            if (!error && Array.isArray(data)) {
+
+                return data.map(
+                    row => ({
+
+                        id:
+                            row.id,
+
+                        created_at:
+                            row.created_at,
+
+                        type:
+                            row.type ||
+                            "UNKNOWN",
+
+                        ip:
+                            row.ip ||
+                            "unknown",
+
+                        username:
+                            row.username ||
+                            row.attempted_user ||
+                            "-",
+
+                        password:
+                            row.password ??
+                            row.attempted_pass ??
+                            "-",
+
+                        status:
+                            row.status ||
+                            row.action ||
+                            "LOGGED",
+
+                        attemptCount:
+                            Number(
+                                row.attempt_count ||
+                                row.attack_count ||
+                                0
+                            )
+
+                    })
+                );
+
+            }
+
+
+            console.error(
+                "❌ Supabase get logs failed:",
+                error?.message
+            );
+
+        } catch (error) {
+
+            console.error(
+                "❌ Supabase fetch error:",
+                error.message
+            );
+
+        }
+
+    }
+
 
     return securityLogs;
 
@@ -82,9 +251,54 @@ function getLogs() {
 // CLEAR LOGS
 // ============================================================
 
-function clearLogs() {
+async function clearLogs() {
 
     securityLogs = [];
+
+
+    if (supabase) {
+
+        try {
+
+            const {
+                error
+            } =
+                await supabase
+                    .from("threat_logs")
+                    .delete()
+                    .not(
+                        "id",
+                        "is",
+                        null
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "❌ Supabase clear logs failed:",
+                    error.message
+                );
+
+                return false;
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "❌ Supabase clear error:",
+                error.message
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    return true;
 
 }
 

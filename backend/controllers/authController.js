@@ -5,8 +5,11 @@
 const {
 
     recordFailedAttempt,
+
     resetAttempts,
+
     isBlocked,
+
     normalizeIP
 
 } = require("../detectionService");
@@ -25,9 +28,11 @@ const {
 
 const DEMO_USER = {
 
-    username: "admin",
+    username:
+        "admin",
 
-    password: "admin123"
+    password:
+        "admin123"
 
 };
 
@@ -39,7 +44,10 @@ const DEMO_USER = {
 function getClientIP(req) {
 
     const forwarded =
-        req.headers["x-forwarded-for"];
+        req.headers[
+            "x-forwarded-for"
+        ];
+
 
     if (forwarded) {
 
@@ -49,10 +57,15 @@ function getClientIP(req) {
 
     }
 
+
     return normalizeIP(
+
         req.socket.remoteAddress ||
+
         req.ip ||
+
         "unknown"
+
     );
 
 }
@@ -62,7 +75,10 @@ function getClientIP(req) {
 // LOGIN
 // ============================================================
 
-async function login(req, res) {
+async function login(
+    req,
+    res
+) {
 
     try {
 
@@ -72,7 +88,8 @@ async function login(req, res) {
 
             password = ""
 
-        } = req.body || {};
+        } =
+            req.body || {};
 
 
         const ip =
@@ -80,12 +97,18 @@ async function login(req, res) {
 
 
         // ====================================================
-        // FIRST CHECK: PERMANENTLY BLOCKED IP
+        // BLOCKED IP CHECK
+        // ====================================================
+        // IMPORTANT:
+        // A blocked IP can NEVER login.
+        // It is NOT counted as a new attack.
         // ====================================================
 
-        if (isBlocked(ip)) {
+        if (
+            isBlocked(ip)
+        ) {
 
-            addLog({
+            await addLog({
 
                 type:
                     "BLOCKED_REQUEST",
@@ -105,22 +128,28 @@ async function login(req, res) {
             });
 
 
-            return res.status(403).json({
+            return res
+                .status(403)
+                .json({
 
-                success: false,
+                    success:
+                        false,
 
-                mode:
-                    "BLOCKED",
+                    mode:
+                        "BLOCKED",
 
-                blocked:
-                    true,
+                    blocked:
+                        true,
 
-                message:
-                    "Your IP has been permanently blocked due to suspicious activity.",
+                    message:
+                        "Your IP has been permanently blocked due to suspicious activity.",
 
-                ip
+                    ip,
 
-            });
+                    attempts:
+                        3
+
+                });
 
         }
 
@@ -134,14 +163,17 @@ async function login(req, res) {
             !password
         ) {
 
-            return res.status(400).json({
+            return res
+                .status(400)
+                .json({
 
-                success: false,
+                    success:
+                        false,
 
-                message:
-                    "Username and password are required."
+                    message:
+                        "Username and password are required."
 
-            });
+                });
 
         }
 
@@ -152,16 +184,20 @@ async function login(req, res) {
 
         if (
 
-            username === DEMO_USER.username &&
+            username ===
+            DEMO_USER.username &&
 
-            password === DEMO_USER.password
+            password ===
+            DEMO_USER.password
 
         ) {
 
-            resetAttempts(ip);
+            resetAttempts(
+                ip
+            );
 
 
-            addLog({
+            await addLog({
 
                 type:
                     "LOGIN_SUCCESS",
@@ -184,7 +220,8 @@ async function login(req, res) {
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 mode:
                     "REAL",
@@ -205,16 +242,20 @@ async function login(req, res) {
         // ====================================================
 
         const detection =
-            recordFailedAttempt(ip);
+            recordFailedAttempt(
+                ip
+            );
 
 
         // ====================================================
         // THIRD ATTEMPT
         // ====================================================
 
-        if (detection.blocked) {
+        if (
+            detection.blocked
+        ) {
 
-            addLog({
+            await addLog({
 
                 type:
                     "IP_BLOCKED",
@@ -234,7 +275,7 @@ async function login(req, res) {
             });
 
 
-            addLog({
+            await addLog({
 
                 type:
                     "DECOY_REDIRECT",
@@ -254,25 +295,28 @@ async function login(req, res) {
             });
 
 
-            return res.status(403).json({
+            return res
+                .status(403)
+                .json({
 
-                success: false,
+                    success:
+                        false,
 
-                mode:
-                    "BLOCKED",
+                    mode:
+                        "BLOCKED",
 
-                blocked:
-                    true,
+                    blocked:
+                        true,
 
-                message:
-                    "Your IP has been permanently blocked due to suspicious activity.",
+                    message:
+                        "Your IP has been permanently blocked due to suspicious activity.",
 
-                ip,
+                    ip,
 
-                attempts:
-                    detection.attempts
+                    attempts:
+                        detection.attempts
 
-            });
+                });
 
         }
 
@@ -281,7 +325,7 @@ async function login(req, res) {
         // NORMAL FAILED ATTEMPT
         // ====================================================
 
-        addLog({
+        await addLog({
 
             type:
                 "LOGIN_ATTEMPT",
@@ -303,25 +347,30 @@ async function login(req, res) {
         });
 
 
-        return res.status(401).json({
+        return res
+            .status(401)
+            .json({
 
-            success: false,
+                success:
+                    false,
 
-            mode:
-                detection.suspicious
-                    ? "SUSPICIOUS"
-                    : "NORMAL",
+                mode:
+                    detection.suspicious
+                        ? "SUSPICIOUS"
+                        : "NORMAL",
 
-            message:
-                "Invalid username or password.",
+                message:
+                    "Invalid username or password.",
 
-            attempts:
-                detection.attempts,
+                attempts:
+                    detection.attempts,
 
-            remaining:
-                3 - detection.attempts
+                remaining:
+                    MAX_SAFE_REMAINING(
+                        detection.attempts
+                    )
 
-        });
+            });
 
 
     } catch (error) {
@@ -332,16 +381,38 @@ async function login(req, res) {
         );
 
 
-        return res.status(500).json({
+        return res
+            .status(500)
+            .json({
 
-            success: false,
+                success:
+                    false,
 
-            message:
-                "Internal server error."
+                message:
+                    "Internal server error."
 
-        });
+            });
 
     }
+
+}
+
+
+// ============================================================
+// REMAINING ATTEMPTS
+// ============================================================
+
+function MAX_SAFE_REMAINING(
+    attempts
+) {
+
+    return Math.max(
+        0,
+        3 -
+        Number(
+            attempts || 0
+        )
+    );
 
 }
 
