@@ -249,6 +249,23 @@
             document.getElementById("status-message");
 
 
+function playSecuritySiren() {
+    try {
+        const A = window.AudioContext || window.webkitAudioContext;
+        if (!A) return;
+        const c = new A(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(650, t);
+        o.frequency.exponentialRampToValueAtTime(950, t + 0.18);
+        o.frequency.exponentialRampToValueAtTime(600, t + 0.36);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.18, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        o.connect(g); g.connect(c.destination); o.start(); o.stop(t + 0.45);
+        setTimeout(function(){c.close()},600);
+    } catch(e) { console.warn('Security siren unavailable:',e); }
+}
+
         function showMessage(
             message,
             type
@@ -440,6 +457,18 @@
                         return;
                     }
 
+
+                    // =====================================
+                    // PERMANENT IP BLOCK
+                    // =====================================
+                    if (result.blocked === true) {
+
+                        playSecuritySiren();
+
+                        showMessage('Security alert! Your IP has been permanently blocked.', 'blocked');
+
+                        return;
+                    }
 
                     // =====================================
                     // SUSPICIOUS
