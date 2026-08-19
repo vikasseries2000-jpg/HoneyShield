@@ -66,7 +66,10 @@ async function addLog(data = {}) {
 
         attack_count:
             Number(
-                data.attack_count ??`n                data.attackCount ??`n                data.attemptCount ??`n                0
+                data.attack_count ??
+                data.attackCount ??
+                data.attemptCount ??
+                0
             )
 
     };
@@ -353,6 +356,7 @@ module.exports = {
     clearLogs
 
 };
+
 
 
 
