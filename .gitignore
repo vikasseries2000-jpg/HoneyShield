@@ -1,3 +1,10 @@
 node_modules/
 .env
 *.log
+backend/logs.json
+
+final_check.txt
+fix_chart.ps1
+frontend/js/app.js.backup
+frontend/js/app.js.before_chart_fix
+frontend/js/app.js.before_siren_icon_fix

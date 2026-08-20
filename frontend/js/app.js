@@ -1,4 +1,4 @@
-function showVisualThreatAlert(log){if(document.getElementById('honeyshieldVisualAlert'))return;var x=document.createElement('div');x.id='honeyshieldVisualAlert';x.innerHTML='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999998;background:#7f1d1d;color:white;border:2px solid #ef4444;border-radius:14px;padding:18px 28px;font:700 18px Segoe UI,Arial;box-shadow:0 0 35px rgba(239,68,68,.7);text-align:center>THREAT DETECTED<br><span style=font-size:13px;color:#fecaca>IP permanently blocked • '+(log.ip||'unknown')+'</span></div>';document.body.appendChild(x);setTimeout(function(){x.remove()},7000)}
+﻿function showVisualThreatAlert(log){if(document.getElementById('honeyshieldVisualAlert'))return;var x=document.createElement('div');x.id='honeyshieldVisualAlert';x.innerHTML='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999998;background:#7f1d1d;color:white;border:2px solid #ef4444;border-radius:14px;padding:18px 28px;font:700 18px Segoe UI,Arial;box-shadow:0 0 35px rgba(239,68,68,.7);text-align:center>THREAT DETECTED<br><span style=font-size:13px;color:#fecaca>IP permanently blocked â€¢ '+(log.ip||'unknown')+'</span></div>';document.body.appendChild(x);setTimeout(function(){x.remove()},7000)}
 // ============================================================
 // HONEYSHIELD FRONTEND
 // FINAL STABLE VERSION
@@ -287,7 +287,7 @@ function showPermanentBlockScreen(ip) {
                     font-size:72px;
                     margin-bottom:20px;
                 ">
-                    🚨
+                    ðŸš¨
                 </div>
 
                 <h1 style="
@@ -539,7 +539,7 @@ async function handleLogin(event) {
         ) {
 
             showLoginStatus(
-                "✅ Authentication successful. Opening dashboard...",
+                "âœ… Authentication successful. Opening dashboard...",
                 "success"
             );
 
@@ -571,7 +571,7 @@ async function handleLogin(event) {
 
             showLoginStatus(
 
-                `âš ï¸ Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
+                `Ã¢Å¡Â Ã¯Â¸Â Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
 
             );
 
@@ -587,7 +587,7 @@ async function handleLogin(event) {
         showLoginStatus(
 
             result.message ||
-            "âŒ Invalid username or password."
+            "Ã¢ÂÅ’ Invalid username or password."
 
         );
 
@@ -599,7 +599,7 @@ async function handleLogin(event) {
         );
 
         showLoginStatus(
-            "âŒ Cannot connect to HoneyShield backend."
+            "Ã¢ÂÅ’ Cannot connect to HoneyShield backend."
         );
 
     } finally {
@@ -1290,22 +1290,43 @@ function renderAttackChart(logs) {
 
             const type =
                 String(
-                    log.type || ""
+                    log.type ||
+                    log.attack_type ||
+                    ""
+                ).toUpperCase();
+
+            const username =
+                String(
+                    log.username || ""
                 ).toLowerCase();
+
+            const password =
+                String(
+                    log.password || ""
+                ).toLowerCase();
+
+            const combined =
+                username + " " + password;
+
+            // SQL Injection indicators
+            const sqlPattern =
+                /(\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bor\b|\band\b).*(=|--|\/\*|\*\/|'|"|\bfrom\b|\bwhere\b)|(--|\/\*|\*\/|'\s*or\s*'|'\s*=\s*')/i;
+
+            // XSS indicators
+            const xssPattern =
+                /(<script\b|<\/script>|javascript\s*:|onerror\s*=|onload\s*=|onclick\s*=|<img\b|<svg\b|<iframe\b|alert\s*\(|prompt\s*\(|confirm\s*\()/i;
 
 
             if (
-                type.includes(
-                    "sql"
-                )
+                type.includes("SQL_INJECTION") ||
+                sqlPattern.test(combined)
             ) {
 
                 sql++;
 
             } else if (
-                type.includes(
-                    "xss"
-                )
+                type.includes("XSS") ||
+                xssPattern.test(combined)
             ) {
 
                 xss++;
@@ -1749,7 +1770,7 @@ async function exportLogsCSV() {
 
 
         alert(
-            `✅ CSV exported successfully.\n\n${logs.length} security events exported.`
+            `âœ… CSV exported successfully.\n\n${logs.length} security events exported.`
         );
 
 
@@ -1761,7 +1782,7 @@ async function exportLogsCSV() {
         );
 
         alert(
-            "âŒ Unable to export security logs."
+            "Ã¢ÂÅ’ Unable to export security logs."
         );
 
     }
@@ -1890,7 +1911,7 @@ async function unblockAllIPs() {
 
 
         alert(
-            "✅ All blocked IPs have been reset."
+            "âœ… All blocked IPs have been reset."
         );
 
 
@@ -1902,7 +1923,7 @@ async function unblockAllIPs() {
         );
 
         alert(
-            "âŒ Failed to reset blocked IPs."
+            "Ã¢ÂÅ’ Failed to reset blocked IPs."
         );
 
     }
@@ -2061,5 +2082,7 @@ window.exportLogsCSV =
 
 
 console.log(
-    "🛡️ HoneyShield app.js loaded successfully."
+    "ðŸ›¡ï¸Â HoneyShield app.js loaded successfully."
 );
+
+
