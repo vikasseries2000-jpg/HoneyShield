@@ -138,5 +138,45 @@
     "username": "o2jeo2",
     "status": "REDIRECTED_TO_DECOY",
     "attemptCount": 5
+  },
+  {
+    "id": 1787212175130,
+    "timestamp": "2026-08-20T07:49:35.131Z",
+    "type": "LOGIN_ATTEMPT",
+    "ip": "::1",
+    "username": "hello",
+    "password": "hello1",
+    "status": "FAILED",
+    "attemptCount": 1
+  },
+  {
+    "id": 1787212176883,
+    "timestamp": "2026-08-20T07:49:36.883Z",
+    "type": "LOGIN_ATTEMPT",
+    "ip": "::1",
+    "username": "hello",
+    "password": "hello2",
+    "status": "SUSPICIOUS",
+    "attemptCount": 2
+  },
+  {
+    "id": 1787212179346,
+    "timestamp": "2026-08-20T07:49:39.346Z",
+    "type": "IP_BLOCKED",
+    "ip": "::1",
+    "username": "hello",
+    "password": "hello3",
+    "status": "BLOCKED",
+    "attemptCount": 3
+  },
+  {
+    "id": 1787212179349,
+    "timestamp": "2026-08-20T07:49:39.349Z",
+    "type": "DECOY_REDIRECT",
+    "ip": "::1",
+    "username": "hello",
+    "password": "hello3",
+    "status": "REDIRECTED_TO_DECOY",
+    "attemptCount": 3
   }
 ]

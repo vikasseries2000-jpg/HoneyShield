@@ -1,3 +1,4 @@
+function showVisualThreatAlert(log){if(document.getElementById('honeyshieldVisualAlert'))return;var x=document.createElement('div');x.id='honeyshieldVisualAlert';x.innerHTML='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999998;background:#7f1d1d;color:white;border:2px solid #ef4444;border-radius:14px;padding:18px 28px;font:700 18px Segoe UI,Arial;box-shadow:0 0 35px rgba(239,68,68,.7);text-align:center>THREAT DETECTED<br><span style=font-size:13px;color:#fecaca>IP permanently blocked • '+(log.ip||'unknown')+'</span></div>';document.body.appendChild(x);setTimeout(function(){x.remove()},7000)}
 // ============================================================
 // HONEYSHIELD FRONTEND
 // FINAL STABLE VERSION
@@ -570,7 +571,7 @@ async function handleLogin(event) {
 
             showLoginStatus(
 
-                `⚠️ Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
+                `âš ï¸ Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
 
             );
 
@@ -586,7 +587,7 @@ async function handleLogin(event) {
         showLoginStatus(
 
             result.message ||
-            "❌ Invalid username or password."
+            "âŒ Invalid username or password."
 
         );
 
@@ -598,7 +599,7 @@ async function handleLogin(event) {
         );
 
         showLoginStatus(
-            "❌ Cannot connect to HoneyShield backend."
+            "âŒ Cannot connect to HoneyShield backend."
         );
 
     } finally {
@@ -764,8 +765,7 @@ function escapeHTML(value) {
 function getLogTime(log) {
 
     const value =
-        log.created_at ||
-        log.time;
+        log.created_at || log.timestamp || log.time;
 
     if (!value) {
 
@@ -807,8 +807,7 @@ function normalizeLog(log = {}) {
             log.id || "-",
 
         created_at:
-            log.created_at ||
-            log.time ||
+            log.created_at || log.timestamp || log.time ||
             null,
 
         ip:
@@ -969,8 +968,7 @@ function renderLogs(logs) {
             let bg =
                 "#334155";
 
-            let statusIcon =
-                "ℹ️";
+            let statusIcon = "";
 
             const status =
                 String(
@@ -985,8 +983,7 @@ function renderLogs(logs) {
                 bg =
                     "#dc2626";
 
-                statusIcon =
-                    "🚫";
+                statusIcon = "";
 
             } else if (
                 status ===
@@ -998,8 +995,7 @@ function renderLogs(logs) {
                 bg =
                     "#dc2626";
 
-                statusIcon =
-                    "🍯";
+                statusIcon = "";
 
             } else if (
                 status ===
@@ -1009,8 +1005,7 @@ function renderLogs(logs) {
                 bg =
                     "#d97706";
 
-                statusIcon =
-                    "⚠️";
+                statusIcon = "";
 
             } else if (
                 status ===
@@ -1020,8 +1015,7 @@ function renderLogs(logs) {
                 bg =
                     "#16a34a";
 
-                statusIcon =
-                    "✅";
+                statusIcon = "";
 
             } else if (
                 status ===
@@ -1031,8 +1025,7 @@ function renderLogs(logs) {
                 bg =
                     "#7c3aed";
 
-                statusIcon =
-                    "❌";
+                statusIcon = "";
 
             }
 
@@ -1178,21 +1171,14 @@ function renderLogs(logs) {
 function renderBlockedIPs(ips) {
 
     const count =
-        document.getElementById(
-            "blockedCount"
-        );
+        document.getElementById("blockedCount");
 
     if (count) {
-
-        count.innerText =
-            ips.length;
-
+        count.innerText = ips.length;
     }
 
     const list =
-        document.getElementById(
-            "blockedIpList"
-        );
+        document.getElementById("blockedIpList");
 
     if (!list) {
         return;
@@ -1200,52 +1186,62 @@ function renderBlockedIPs(ips) {
 
     if (!ips.length) {
 
-        list.innerHTML = `
-            <span style="color:#94a3b8;">
-                No IPs blacklisted.
-            </span>
-        `;
+        list.innerHTML =
+            '<span style="color:#94a3b8;">No IPs blacklisted.</span>';
 
         return;
-
     }
 
     list.innerHTML =
-        ips
-            .map(
-                ip => `
+        ips.map(ip => {
 
-                    <span style="
-                        background:#7f1d1d;
+            const safeIP =
+                escapeHTML(ip);
 
-                        color:#fca5a5;
+            const encodedIP =
+                encodeURIComponent(ip);
 
-                        padding:6px 10px;
+            return `
+                <span style="
+                    background:#7f1d1d;
+                    color:#fca5a5;
+                    padding:6px 10px;
+                    border-radius:5px;
+                    margin:3px;
+                    display:inline-flex;
+                    align-items:center;
+                    gap:8px;
+                    font-family:monospace;
+                    font-weight:bold;
+                ">
 
-                        border-radius:5px;
+                    &#128308; ${safeIP}
 
-                        margin:3px;
+                    <button
+                        type="button"
+                        onclick="unblockSingleIP('${encodedIP}')"
+                        style="
+                            background:#16a34a;
+                            color:white;
+                            border:none;
+                            padding:4px 8px;
+                            border-radius:4px;
+                            cursor:pointer;
+                            font-weight:bold;
+                        "
+                    >
+                        &#128076; Unblock
+                    </button>
 
-                        display:inline-block;
+                </span>
+            `;
 
-                        font-family:monospace;
-
-                        font-weight:bold;
-                    ">
-
-                        🚫
-                        ${escapeHTML(ip)}
-
-                    </span>
-
-                `
-            )
-            .join("");
-
+        }).join("");
 }
 
 
 // ============================================================
+
 // ATTACK CHART
 // ============================================================
 
@@ -1269,7 +1265,6 @@ function renderAttackChart(logs) {
         return;
 
     }
-
     const attackLogs =
         getAttackLogs(
             logs
@@ -1424,6 +1419,29 @@ function renderAttackChart(logs) {
 // DASHBOARD
 // ============================================================
 
+function checkDashboardSiren(logs) {
+    if (!sirenEnabled || !Array.isArray(logs) || !logs.length) return;
+    const blocked = logs.filter(function(log) {
+        return String(log.type || log.attack_type || '').toUpperCase() === 'IP_BLOCKED';
+    });
+    if (!blocked.length) return;
+    blocked.sort(function(a,b) {
+        return new Date(b.created_at || b.timestamp || b.time || 0) - new Date(a.created_at || a.time || 0);
+    });
+    const latest = blocked[0]; showVisualThreatAlert(latest);
+    const eventId = String(latest.id || ((latest.created_at || latest.timestamp || latest.time || '') + '|' + (latest.ip || '')));
+    const lastEvent = localStorage.getItem('honeyshield_last_siren_event');
+    if (lastEvent === eventId) return;
+    const eventTime = new Date(latest.created_at || latest.timestamp || latest.time || 0).getTime();
+    if (lastEvent === null && (!eventTime || Date.now() - eventTime > 30000)) {
+        localStorage.setItem('honeyshield_last_siren_event', eventId);
+        return;
+    }
+    localStorage.setItem('honeyshield_last_siren_event', eventId);
+    console.log('HoneyShield: IP_BLOCKED detected - dashboard siren triggered');
+    playBeepSound(5);
+}
+
 async function loadDashboard() {
 
     try {
@@ -1443,6 +1461,9 @@ async function loadDashboard() {
         // ====================================================
         // REAL ATTACK COUNT
         // ====================================================
+
+        checkDashboardSiren(logs);
+
 
         const attackLogs =
             getAttackLogs(
@@ -1740,11 +1761,74 @@ async function exportLogsCSV() {
         );
 
         alert(
-            "❌ Unable to export security logs."
+            "âŒ Unable to export security logs."
         );
 
     }
 
+}
+
+
+// ============================================================
+// UNBLOCK ONE IP
+// ============================================================
+
+async function unblockSingleIP(encodedIP) {
+
+    try {
+
+        const ip = decodeURIComponent(encodedIP);
+
+        if (!ip) {
+            alert("Invalid IP address.");
+            return;
+        }
+
+        const confirmed = confirm(
+            `Unblock IP ${ip}?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const response = await fetch(
+            `/api/blocked-ips/${encodeURIComponent(ip)}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Unblock API returned ${response.status}`
+            );
+        }
+
+        const result = await response.json();
+
+        console.log(
+            "Single IP unblock result:",
+            result
+        );
+
+        await loadDashboard();
+
+        alert(
+            `IP ${ip} has been unblocked.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Single IP unblock failed:",
+            error
+        );
+
+        alert(
+            "Failed to unblock this IP."
+        );
+    }
 }
 
 
@@ -1818,7 +1902,7 @@ async function unblockAllIPs() {
         );
 
         alert(
-            "❌ Failed to reset blocked IPs."
+            "âŒ Failed to reset blocked IPs."
         );
 
     }
@@ -1977,5 +2061,5 @@ window.exportLogsCSV =
 
 
 console.log(
-    "🛡️ HoneyShield app.js loaded successfully."
+    "🛡️ HoneyShield app.js loaded successfully."
 );

@@ -1,179 +1,139 @@
-﻿// ============================================================
-// HONEYSHIELD SECURITY LOGGER
+// ============================================================
+// HONEYSHIELD SECURITY ENGINE
+// LOCAL SECURITY LOG SERVICE
 // ============================================================
 
-const { supabase } = require("./supabase");
+const fs = require("fs");
+const path = require("path");
+
+const LOG_FILE = path.join(__dirname, "..", "logs.json");
 
 
 // ============================================================
-// MEMORY FALLBACK
+// READ LOGS
 // ============================================================
 
-let securityLogs = [];
+function readLogs() {
+    try {
+        if (!fs.existsSync(LOG_FILE)) {
+            fs.writeFileSync(
+                LOG_FILE,
+                "[]",
+                "utf8"
+            );
+
+            return [];
+        }
+
+        const data = fs.readFileSync(
+            LOG_FILE,
+            "utf8"
+        );
+
+        if (!data.trim()) {
+            return [];
+        }
+
+        const logs = JSON.parse(data);
+
+        return Array.isArray(logs)
+            ? logs
+            : [];
+
+    } catch (error) {
+        console.error(
+            "Unable to read security logs:",
+            error.message
+        );
+
+        return [];
+    }
+}
+
+
+// ============================================================
+// WRITE LOGS
+// ============================================================
+
+function writeLogs(logs) {
+    try {
+        fs.writeFileSync(
+            LOG_FILE,
+            JSON.stringify(
+                logs,
+                null,
+                2
+            ),
+            "utf8"
+        );
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            "Unable to write security logs:",
+            error.message
+        );
+
+        return false;
+    }
+}
 
 
 // ============================================================
 // ADD LOG
 // ============================================================
 
-async function addLog(data = {}) {
+async function addLog(log = {}) {
 
-    const now = new Date().toISOString();
+    const entry = {
 
-    const log = {
+        id:
+            log.id ||
+            Date.now(),
 
-        id: data.id || Date.now(),
-
-        created_at: now,
-
-        time:
-            data.time ||
-            now,
-
-        ip:
-            data.ip ||
-            "unknown",
-
-        route:
-            data.route ||
-            "/api/auth/login",
+        timestamp:
+            log.timestamp ||
+            log.created_at ||
+            new Date().toISOString(),
 
         type:
-            data.type ||
-            data.attack_type ||
+            log.type ||
             "UNKNOWN",
 
+        ip:
+            log.ip ||
+            "-",
+
         username:
-            data.username ||
-            data.attempted_user ||
+            log.username ||
             "-",
 
         password:
-            data.password !== undefined
-                ? String(data.password)
-                : data.attempted_password !== undefined
-                    ? String(data.attempted_password)
-                    : "-",
+            log.password !== undefined
+                ? log.password
+                : undefined,
 
         status:
-            data.status ||
-            data.action ||
+            log.status ||
             "LOGGED",
 
-        user_agent:
-            data.user_agent ||
-            "-",
-
-        attack_count:
-            Number(
-                data.attack_count ??
-                data.attackCount ??
-                data.attemptCount ??
-                0
-            )
+        attemptCount:
+            log.attemptCount ??
+            log.attack_count ??
+            log.attempt_count ??
+            0
 
     };
 
 
-    // --------------------------------------------------------
-    // MEMORY
-    // --------------------------------------------------------
+    const logs = readLogs();
 
-    securityLogs.unshift(log);
+    logs.push(entry);
 
+    writeLogs(logs);
 
-    // --------------------------------------------------------
-    // SUPABASE
-    // --------------------------------------------------------
-
-    if (supabase) {
-
-        try {
-
-            const payload = {
-
-                id:
-                    log.id,
-
-                time:
-                    log.time,
-
-                ip:
-                    log.ip,
-
-                route:
-                    log.route,
-
-                attack_type:
-                    log.type,
-
-                attempted_user:
-                    log.username,
-
-                attempted_password:
-                    log.password,
-
-                action:
-                    log.status,
-
-                user_agent:
-                    log.user_agent,
-
-                attack_count:
-                    log.attack_count,
-
-                created_at:
-                    log.created_at,
-
-                type:
-                    log.type,
-
-                username:
-                    log.username,
-
-                password:
-                    log.password,
-
-                status:
-                    log.status
-
-            };
-
-
-            const { error } =
-                await supabase
-                    .from("threat_logs")
-                    .insert(payload);
-
-
-            if (error) {
-
-                console.error(
-                    "âŒ Supabase log insert failed:",
-                    error.message
-                );
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "âŒ Supabase logging error:",
-                error.message
-            );
-
-        }
-
-    }
-
-
-    console.log(
-        "ðŸ“ Security Log:",
-        log
-    );
-
-
-    return log;
+    return entry;
 }
 
 
@@ -183,108 +143,10 @@ async function addLog(data = {}) {
 
 async function getLogs() {
 
-    if (supabase) {
+    const logs = readLogs();
 
-        try {
+    return [...logs].reverse();
 
-            const {
-                data,
-                error
-            } =
-                await supabase
-                    .from("threat_logs")
-                    .select("*")
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    );
-
-
-            if (!error && Array.isArray(data)) {
-
-                return data.map(row => ({
-
-                    id:
-                        row.id,
-
-                    created_at:
-                        row.created_at,
-
-                    time:
-                        row.time ||
-                        row.created_at,
-
-                    ip:
-                        row.ip ||
-                        "unknown",
-
-                    route:
-                        row.route ||
-                        "/api/auth/login",
-
-                    type:
-                        row.type ||
-                        row.attack_type ||
-                        "UNKNOWN",
-
-                    username:
-                        row.username ||
-                        row.attempted_user ||
-                        "-",
-
-                    password:
-                        row.password ??
-                        row.attempted_password ??
-                        "-",
-
-                    status:
-                        row.status ||
-                        row.action ||
-                        "LOGGED",
-
-                    user_agent:
-                        row.user_agent ||
-                        "-",
-
-                    attack_count:
-                        Number(
-                            row.attack_count ??
-                            0
-                        )
-
-                }));
-
-            }
-
-
-            if (error) {
-
-                console.error(
-                    "âŒ Supabase get logs failed:",
-                    error.message
-                );
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "âŒ Supabase fetch error:",
-                error.message
-            );
-
-        }
-
-    }
-
-
-    // --------------------------------------------------------
-    // MEMORY FALLBACK
-    // --------------------------------------------------------
-
-    return securityLogs;
 }
 
 
@@ -294,52 +156,8 @@ async function getLogs() {
 
 async function clearLogs() {
 
-    securityLogs = [];
+    return writeLogs([]);
 
-
-    if (supabase) {
-
-        try {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from("threat_logs")
-                    .delete()
-                    .not(
-                        "id",
-                        "is",
-                        null
-                    );
-
-
-            if (error) {
-
-                console.error(
-                    "âŒ Supabase clear logs failed:",
-                    error.message
-                );
-
-                return false;
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "âŒ Supabase clear error:",
-                error.message
-            );
-
-            return false;
-
-        }
-
-    }
-
-
-    return true;
 }
 
 
@@ -356,7 +174,3 @@ module.exports = {
     clearLogs
 
 };
-
-
-
-
