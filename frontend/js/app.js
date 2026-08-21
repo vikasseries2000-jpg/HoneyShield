@@ -1,4 +1,4 @@
-﻿function showVisualThreatAlert(log){if(document.getElementById('honeyshieldVisualAlert'))return;var x=document.createElement('div');x.id='honeyshieldVisualAlert';x.innerHTML='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999998;background:#7f1d1d;color:white;border:2px solid #ef4444;border-radius:14px;padding:18px 28px;font:700 18px Segoe UI,Arial;box-shadow:0 0 35px rgba(239,68,68,.7);text-align:center>THREAT DETECTED<br><span style=font-size:13px;color:#fecaca>IP permanently blocked â€¢ '+(log.ip||'unknown')+'</span></div>';document.body.appendChild(x);setTimeout(function(){x.remove()},7000)}
+function showVisualThreatAlert(log){if(document.getElementById('honeyshieldVisualAlert'))return;var x=document.createElement('div');x.id='honeyshieldVisualAlert';x.innerHTML='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999998;background:#7f1d1d;color:white;border:2px solid #ef4444;border-radius:14px;padding:18px 28px;font:700 18px Segoe UI,Arial;box-shadow:0 0 35px rgba(239,68,68,.7);text-align:center>THREAT DETECTED<br><span style=font-size:13px;color:#fecaca>IP permanently blocked Ã¢â‚¬Â¢ '+(log.ip||'unknown')+'</span></div>';document.body.appendChild(x);setTimeout(function(){x.remove()},7000)}
 // ============================================================
 // HONEYSHIELD FRONTEND
 // FINAL STABLE VERSION
@@ -163,8 +163,7 @@ function createSirenButton() {
     button.id =
         "sirenBtn";
 
-    button.innerHTML =
-        "🔊 Siren ON";
+    button.innerHTML = "🔊 Siren ON";
 
     button.style.cssText = `
 
@@ -199,8 +198,7 @@ function createSirenButton() {
 
             if (sirenEnabled) {
 
-                button.innerHTML =
-                    "🔊 Siren ON";
+                button.innerHTML = "🔊 Siren ON";
 
                 button.style.background =
                     "#16a34a";
@@ -211,8 +209,7 @@ function createSirenButton() {
 
             } else {
 
-                button.innerHTML =
-                    "🔇 Siren OFF";
+                button.innerHTML = "🔇 Siren OFF";
 
                 button.style.background =
                     "#64748b";
@@ -287,7 +284,7 @@ function showPermanentBlockScreen(ip) {
                     font-size:72px;
                     margin-bottom:20px;
                 ">
-                    ðŸš¨
+                    Ã°Å¸Å¡Â¨
                 </div>
 
                 <h1 style="
@@ -539,7 +536,7 @@ async function handleLogin(event) {
         ) {
 
             showLoginStatus(
-                "âœ… Authentication successful. Opening dashboard...",
+                "Ã¢Å“â€¦ Authentication successful. Opening dashboard...",
                 "success"
             );
 
@@ -571,7 +568,7 @@ async function handleLogin(event) {
 
             showLoginStatus(
 
-                `Ã¢Å¡Â Ã¯Â¸Â Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
+                `ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Suspicious activity detected. Attempt ${result.attempts || result.attemptCount || "?"} of 3.`
 
             );
 
@@ -587,7 +584,7 @@ async function handleLogin(event) {
         showLoginStatus(
 
             result.message ||
-            "Ã¢ÂÅ’ Invalid username or password."
+            "ÃƒÂ¢Ã‚ÂÃ…â€™ Invalid username or password."
 
         );
 
@@ -599,7 +596,7 @@ async function handleLogin(event) {
         );
 
         showLoginStatus(
-            "Ã¢ÂÅ’ Cannot connect to HoneyShield backend."
+            "ÃƒÂ¢Ã‚ÂÃ…â€™ Cannot connect to HoneyShield backend."
         );
 
     } finally {
@@ -825,13 +822,7 @@ function normalizeLog(log = {}) {
             "-",
 
         password:
-            log.password !== undefined
-                ? log.password
-                : (
-                    log.attempted_pass !== undefined
-                        ? log.attempted_pass
-                        : "-"
-                ),
+            log.password !== undefined && log.password !== null ? log.password : (log.attempted_password !== undefined && log.attempted_password !== null ? log.attempted_password : (log.attempted_pass !== undefined && log.attempted_pass !== null ? log.attempted_pass : "-")),
 
         status:
             log.status ||
@@ -1244,7 +1235,6 @@ function renderBlockedIPs(ips) {
 
 // ATTACK CHART
 // ============================================================
-
 function renderAttackChart(logs) {
 
     const canvas =
@@ -1254,8 +1244,7 @@ function renderAttackChart(logs) {
 
     if (
         !canvas ||
-        typeof Chart ===
-            "undefined"
+        typeof Chart === "undefined"
     ) {
 
         console.warn(
@@ -1263,21 +1252,20 @@ function renderAttackChart(logs) {
         );
 
         return;
-
     }
+
+
+    // ========================================================
+    // GET ATTACK LOGS
+    // ========================================================
+
     const attackLogs =
-        getAttackLogs(
-            logs
-        );
+        getAttackLogs(logs);
 
-    let sql =
-        0;
 
-    let xss =
-        0;
-
-    let brute =
-        0;
+    let sql = 0;
+    let xss = 0;
+    let brute = 0;
 
 
     attackLogs.forEach(
@@ -1288,50 +1276,84 @@ function renderAttackChart(logs) {
                     rawLog
                 );
 
+
+            // =================================================
+            // SUPPORT OLD + SUPABASE FORMAT
+            // =================================================
+
             const type =
                 String(
-                    log.type ||
                     log.attack_type ||
+                    log.type ||
                     ""
                 ).toUpperCase();
 
+
             const username =
                 String(
-                    log.username || ""
-                ).toLowerCase();
+                    log.attempted_user ||
+                    log.username ||
+                    ""
+                );
+
 
             const password =
                 String(
-                    log.password || ""
-                ).toLowerCase();
+                    log.attempted_password ||
+                    log.password ||
+                    ""
+                );
+
 
             const combined =
-                username + " " + password;
+                username +
+                " " +
+                password;
 
-            // SQL Injection indicators
+
+            // =================================================
+            // SQL INJECTION
+            // =================================================
+
             const sqlPattern =
-                /(\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bor\b|\band\b).*(=|--|\/\*|\*\/|'|"|\bfrom\b|\bwhere\b)|(--|\/\*|\*\/|'\s*or\s*'|'\s*=\s*')/i;
+                /(\bunion\b|\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\btruncate\b|\bexec\b|\bexecute\b|\bor\b|\band\b).*(=|--|\/\*|\*\/|'|"|\bfrom\b|\bwhere\b)|(--|\/\*|\*\/|'\s*or\s*'|'\s*=\s*'|"\s*or\s*"|"\s*=\s*")/i;
 
-            // XSS indicators
+
+            // =================================================
+            // XSS
+            // =================================================
+
             const xssPattern =
-                /(<script\b|<\/script>|javascript\s*:|onerror\s*=|onload\s*=|onclick\s*=|<img\b|<svg\b|<iframe\b|alert\s*\(|prompt\s*\(|confirm\s*\()/i;
+                /(<script\b|<\/script>|javascript\s*:|onerror\s*=|onload\s*=|onclick\s*=|onmouseover\s*=|<img\b|<svg\b|<iframe\b|<object\b|<embed\b|alert\s*\(|prompt\s*\(|confirm\s*\()/i;
 
+
+            // =================================================
+            // CLASSIFY
+            // =================================================
 
             if (
                 type.includes("SQL_INJECTION") ||
+                type.includes("SQLI") ||
+                type.includes("SQL INJECTION") ||
                 sqlPattern.test(combined)
             ) {
 
                 sql++;
 
-            } else if (
+            }
+
+            else if (
                 type.includes("XSS") ||
+                type.includes("CROSS_SITE_SCRIPT") ||
+                type.includes("CROSS-SITE") ||
                 xssPattern.test(combined)
             ) {
 
                 xss++;
 
-            } else {
+            }
+
+            else {
 
                 brute++;
 
@@ -1341,6 +1363,10 @@ function renderAttackChart(logs) {
     );
 
 
+    // ========================================================
+    // DESTROY OLD CHART
+    // ========================================================
+
     if (
         attackChartInstance
     ) {
@@ -1349,9 +1375,12 @@ function renderAttackChart(logs) {
 
         attackChartInstance =
             null;
-
     }
 
+
+    // ========================================================
+    // CREATE PIE CHART
+    // ========================================================
 
     attackChartInstance =
         new Chart(
@@ -1434,7 +1463,6 @@ function renderAttackChart(logs) {
         );
 
 }
-
 
 // ============================================================
 // DASHBOARD
@@ -1770,7 +1798,7 @@ async function exportLogsCSV() {
 
 
         alert(
-            `âœ… CSV exported successfully.\n\n${logs.length} security events exported.`
+            `Ã¢Å“â€¦ CSV exported successfully.\n\n${logs.length} security events exported.`
         );
 
 
@@ -1782,7 +1810,7 @@ async function exportLogsCSV() {
         );
 
         alert(
-            "Ã¢ÂÅ’ Unable to export security logs."
+            "ÃƒÂ¢Ã‚ÂÃ…â€™ Unable to export security logs."
         );
 
     }
@@ -1911,7 +1939,7 @@ async function unblockAllIPs() {
 
 
         alert(
-            "âœ… All blocked IPs have been reset."
+            "Ã¢Å“â€¦ All blocked IPs have been reset."
         );
 
 
@@ -1923,7 +1951,7 @@ async function unblockAllIPs() {
         );
 
         alert(
-            "Ã¢ÂÅ’ Failed to reset blocked IPs."
+            "ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to reset blocked IPs."
         );
 
     }
@@ -2082,7 +2110,5 @@ window.exportLogsCSV =
 
 
 console.log(
-    "ðŸ›¡ï¸Â HoneyShield app.js loaded successfully."
+    "Ã°Å¸â€ºÂ¡Ã¯Â¸ÂÃ‚Â HoneyShield app.js loaded successfully."
 );
-
-

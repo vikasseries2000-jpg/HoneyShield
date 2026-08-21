@@ -1,83 +1,9 @@
 // ============================================================
-// HONEYSHIELD SECURITY ENGINE
-// LOCAL SECURITY LOG SERVICE
+// HONEYSHIELD SECURITY LOG SERVICE
+// SUPABASE STORAGE
 // ============================================================
 
-const fs = require("fs");
-const path = require("path");
-
-const LOG_FILE = path.join(__dirname, "..", "logs.json");
-
-
-// ============================================================
-// READ LOGS
-// ============================================================
-
-function readLogs() {
-    try {
-        if (!fs.existsSync(LOG_FILE)) {
-            fs.writeFileSync(
-                LOG_FILE,
-                "[]",
-                "utf8"
-            );
-
-            return [];
-        }
-
-        const data = fs.readFileSync(
-            LOG_FILE,
-            "utf8"
-        );
-
-        if (!data.trim()) {
-            return [];
-        }
-
-        const logs = JSON.parse(data);
-
-        return Array.isArray(logs)
-            ? logs
-            : [];
-
-    } catch (error) {
-        console.error(
-            "Unable to read security logs:",
-            error.message
-        );
-
-        return [];
-    }
-}
-
-
-// ============================================================
-// WRITE LOGS
-// ============================================================
-
-function writeLogs(logs) {
-    try {
-        fs.writeFileSync(
-            LOG_FILE,
-            JSON.stringify(
-                logs,
-                null,
-                2
-            ),
-            "utf8"
-        );
-
-        return true;
-
-    } catch (error) {
-        console.error(
-            "Unable to write security logs:",
-            error.message
-        );
-
-        return false;
-    }
-}
+const { supabase } = require("./supabase");
 
 
 // ============================================================
@@ -92,48 +18,87 @@ async function addLog(log = {}) {
             log.id ||
             Date.now(),
 
-        timestamp:
-            log.timestamp ||
-            log.created_at ||
-            new Date().toISOString(),
-
-        type:
-            log.type ||
-            "UNKNOWN",
-
         ip:
             log.ip ||
             "-",
 
-        username:
+        time:
+            log.time ||
+            log.timestamp ||
+            log.created_at ||
+            new Date().toISOString(),
+
+        route:
+            log.route ||
+            "/api/auth/login",
+
+        attack_type:
+            log.attack_type ||
+            log.type ||
+            "UNKNOWN",
+
+        attempted_user:
+            log.attempted_user ||
             log.username ||
             "-",
 
-        password:
-            log.password !== undefined
-                ? log.password
-                : undefined,
+        attempted_password:
+            log.attempted_password !== undefined
+                ? log.attempted_password
+                : log.password !== undefined
+                    ? log.password
+                    : null,
 
-        status:
+        action:
+            log.action ||
             log.status ||
             "LOGGED",
 
-        attemptCount:
-            log.attemptCount ??
+        attack_count:
             log.attack_count ??
+            log.attemptCount ??
             log.attempt_count ??
             0
-
     };
 
 
-    const logs = readLogs();
+    // ========================================================
+    // SUPABASE CHECK
+    // ========================================================
 
-    logs.push(entry);
+    if (!supabase) {
 
-    writeLogs(logs);
+        console.error(
+            "Supabase is not configured. Security log was not saved."
+        );
 
-    return entry;
+        return entry;
+    }
+
+
+    // ========================================================
+    // INSERT INTO SUPABASE
+    // ========================================================
+
+    const { data, error } = await supabase
+        .from("threat_logs")
+        .insert([entry])
+        .select()
+        .single();
+
+
+    if (error) {
+
+        console.error(
+            "Unable to save security log:",
+            error.message
+        );
+
+        return entry;
+    }
+
+
+    return data;
 }
 
 
@@ -143,10 +108,36 @@ async function addLog(log = {}) {
 
 async function getLogs() {
 
-    const logs = readLogs();
+    if (!supabase) {
 
-    return [...logs].reverse();
+        console.error(
+            "Supabase is not configured. Unable to read logs."
+        );
 
+        return [];
+    }
+
+
+    const { data, error } = await supabase
+        .from("threat_logs")
+        .select("*")
+        .order("time", {
+            ascending: false
+        });
+
+
+    if (error) {
+
+        console.error(
+            "Unable to read security logs:",
+            error.message
+        );
+
+        return [];
+    }
+
+
+    return data || [];
 }
 
 
@@ -156,8 +147,34 @@ async function getLogs() {
 
 async function clearLogs() {
 
-    return writeLogs([]);
+    if (!supabase) {
 
+        console.error(
+            "Supabase is not configured. Unable to clear logs."
+        );
+
+        return false;
+    }
+
+
+    const { error } = await supabase
+        .from("threat_logs")
+        .delete()
+        .not("id", "is", null);
+
+
+    if (error) {
+
+        console.error(
+            "Unable to clear security logs:",
+            error.message
+        );
+
+        return false;
+    }
+
+
+    return true;
 }
 
 
@@ -168,9 +185,7 @@ async function clearLogs() {
 module.exports = {
 
     addLog,
-
     getLogs,
-
     clearLogs
 
 };
