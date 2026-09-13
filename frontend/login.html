@@ -5,24 +5,32 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>HoneyShield - Login Portal</title>
 
     <style>
 
         * {
+
             box-sizing: border-box;
+
             margin: 0;
+
             padding: 0;
+
             font-family:
                 'Segoe UI',
                 Tahoma,
                 Geneva,
                 Verdana,
                 sans-serif;
+
         }
+
 
         body {
 
@@ -37,7 +45,11 @@
             align-items: center;
 
             justify-content: center;
+
+            padding: 20px;
+
         }
+
 
         .login-card {
 
@@ -51,12 +63,14 @@
 
             width: 100%;
 
-            max-width: 400px;
+            max-width: 420px;
 
             box-shadow:
                 0 10px 25px
                 rgba(0, 0, 0, 0.5);
+
         }
+
 
         .login-card h2 {
 
@@ -64,15 +78,60 @@
 
             font-size: 22px;
 
-            margin-bottom: 20px;
+            margin-bottom: 8px;
 
             text-align: center;
+
         }
+
+
+        .security-subtitle {
+
+            text-align: center;
+
+            color: #94a3b8;
+
+            font-size: 12px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .attempt-counter {
+
+            background: #0f172a;
+
+            border: 1px solid #334155;
+
+            border-radius: 7px;
+
+            padding: 10px;
+
+            margin-bottom: 15px;
+
+            text-align: center;
+
+            font-size: 13px;
+
+            color: #cbd5e1;
+
+        }
+
+
+        .attempt-counter strong {
+
+            color: #38bdf8;
+
+        }
+
 
         .form-group {
 
             margin-bottom: 15px;
+
         }
+
 
         .form-group label {
 
@@ -83,7 +142,9 @@
             font-size: 13px;
 
             margin-bottom: 5px;
+
         }
+
 
         .form-group input {
 
@@ -102,12 +163,16 @@
             font-size: 14px;
 
             outline: none;
+
         }
+
 
         .form-group input:focus {
 
             border-color: #38bdf8;
+
         }
+
 
         .btn-login {
 
@@ -130,19 +195,25 @@
             font-size: 15px;
 
             margin-top: 10px;
+
         }
+
 
         .btn-login:hover {
 
             background: #0ea5e9;
+
         }
+
 
         .btn-login:disabled {
 
             opacity: 0.6;
 
             cursor: not-allowed;
+
         }
+
 
         #status-message {
 
@@ -150,7 +221,7 @@
 
             margin-bottom: 15px;
 
-            padding: 10px;
+            padding: 12px;
 
             border-radius: 6px;
 
@@ -159,6 +230,121 @@
             text-align: center;
 
             font-weight: bold;
+
+            line-height: 1.5;
+
+        }
+
+
+        .recovery-box {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 14px;
+
+            background: #172033;
+
+            border: 1px solid #475569;
+
+            border-radius: 7px;
+
+            color: #cbd5e1;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+
+            text-align: center;
+
+        }
+
+
+        .recovery-title {
+
+            color: #fca5a5;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .contact-admin-btn {
+
+            display: block;
+
+            width: 100%;
+
+            margin-top: 12px;
+
+            padding: 11px;
+
+            background: #334155;
+
+            color: #f8fafc;
+
+            border: 1px solid #64748b;
+
+            border-radius: 6px;
+
+            font-size: 13px;
+
+            font-weight: bold;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease;
+
+        }
+
+
+        .contact-admin-btn:hover {
+
+            background: #475569;
+
+            border-color: #38bdf8;
+
+        }
+
+
+        .contact-note {
+
+            margin-top: 8px;
+
+            color: #64748b;
+
+            font-size: 10px;
+
+            line-height: 1.4;
+
+        }
+
+
+        .security-note {
+
+            margin-top: 18px;
+
+            padding-top: 15px;
+
+            border-top: 1px solid #334155;
+
+            color: #64748b;
+
+            text-align: center;
+
+            font-size: 11px;
+
+            line-height: 1.5;
+
         }
 
     </style>
@@ -168,14 +354,85 @@
 
 <body>
 
+
     <div class="login-card">
 
-        <h2>🛡️ HoneyShield Portal</h2>
 
-        <div id="status-message"></div>
+        <h2>
+            🛡️ HoneyShield Portal
+        </h2>
+
+
+        <div class="security-subtitle">
+
+            Secure Login Monitoring System
+
+        </div>
+
+
+        <div
+            id="attempt-counter"
+            class="attempt-counter"
+        >
+
+            Attempts:
+            <strong>0 / 3</strong>
+            &nbsp;|&nbsp;
+            <strong>3</strong>
+            attempts remaining
+
+        </div>
+
+
+        <div
+            id="status-message"
+        ></div>
+
+
+        <div
+            id="recovery-box"
+            class="recovery-box"
+        >
+
+            <div class="recovery-title">
+
+                🔐 Access Temporarily Blocked
+
+            </div>
+
+            Your IP has been blocked after
+            3 failed login attempts.
+
+            <br><br>
+
+            If you are the legitimate account owner,
+            you can contact the administrator for
+            identity verification and access restoration.
+
+
+            <a
+                href="/recovery.html"
+                id="contact-admin-btn"
+                class="contact-admin-btn"
+            >
+
+                📧 Contact Administrator
+
+            </a>
+
+
+            <div class="contact-note">
+
+                A secure HoneyShield recovery request form
+                will open in this browser.
+
+            </div>
+
+        </div>
 
 
         <form id="login-form">
+
 
             <div class="form-group">
 
@@ -214,323 +471,698 @@
             <button
                 type="submit"
                 id="login-button"
-                class="btn-login">
+                class="btn-login"
+            >
 
                 Login to Dashboard
 
             </button>
 
+
         </form>
+
+
+        <div class="security-note">
+
+            🔔 Failed login attempts are monitored
+            for security purposes.
+
+        </div>
+
 
     </div>
 
 
-    <!-- =========================================
-         SIMPLE LOGIN SYSTEM
-         No Supabase
-         No app.js
-         ========================================= -->
-
-    <script>
-
-        const loginForm =
-            document.getElementById("login-form");
-
-        const usernameInput =
-            document.getElementById("username");
-
-        const passwordInput =
-            document.getElementById("password");
-
-        const loginButton =
-            document.getElementById("login-button");
-
-        const statusMessage =
-            document.getElementById("status-message");
+<script>
 
 
-function playSecuritySiren() {
-    try {
-        const A = window.AudioContext || window.webkitAudioContext;
-        if (!A) return;
-        const c = new A(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(650, t);
-        o.frequency.exponentialRampToValueAtTime(950, t + 0.18);
-        o.frequency.exponentialRampToValueAtTime(600, t + 0.36);
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.18, t + 0.03);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-        o.connect(g); g.connect(c.destination); o.start(); o.stop(t + 0.45);
-        setTimeout(function(){c.close()},600);
-    } catch(e) { console.warn('Security siren unavailable:',e); }
+// ============================================================
+// ELEMENTS
+// ============================================================
+
+const loginForm =
+    document.getElementById(
+        "login-form"
+    );
+
+
+const usernameInput =
+    document.getElementById(
+        "username"
+    );
+
+
+const passwordInput =
+    document.getElementById(
+        "password"
+    );
+
+
+const loginButton =
+    document.getElementById(
+        "login-button"
+    );
+
+
+const statusMessage =
+    document.getElementById(
+        "status-message"
+    );
+
+
+const attemptCounter =
+    document.getElementById(
+        "attempt-counter"
+    );
+
+
+const recoveryBox =
+    document.getElementById(
+        "recovery-box"
+    );
+
+
+const contactAdminButton =
+    document.getElementById(
+        "contact-admin-btn"
+    );
+
+
+// ============================================================
+// LOCAL ATTEMPT DISPLAY
+// ============================================================
+
+let currentAttempts = 0;
+
+
+const MAX_ATTEMPTS = 3;
+
+
+// ============================================================
+// UPDATE ATTEMPT COUNTER
+// ============================================================
+
+function updateAttemptCounter(
+    attempts
+) {
+
+    currentAttempts =
+        Math.max(
+            0,
+            Math.min(
+                MAX_ATTEMPTS,
+                Number(
+                    attempts || 0
+                )
+            )
+        );
+
+
+    const remaining =
+        Math.max(
+            0,
+            MAX_ATTEMPTS -
+            currentAttempts
+        );
+
+
+    attemptCounter.innerHTML =
+
+        "Attempts: " +
+
+        "<strong>" +
+        currentAttempts +
+        " / " +
+        MAX_ATTEMPTS +
+        "</strong>" +
+
+        "&nbsp;|&nbsp;" +
+
+        "<strong>" +
+        remaining +
+        "</strong>" +
+
+        (
+            remaining === 1
+                ? " attempt remaining"
+                : " attempts remaining"
+        );
+
 }
 
-        function showMessage(
-            message,
-            type
+
+// ============================================================
+// SECURITY SIREN
+// ============================================================
+
+function playSecuritySiren() {
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+        if (
+            !AudioContext
         ) {
 
-            statusMessage.style.display =
-                "block";
+            return;
 
-            statusMessage.textContent =
-                message;
-
-
-            if (type === "success") {
-
-                statusMessage.style.background =
-                    "#064e3b";
-
-                statusMessage.style.color =
-                    "#6ee7b7";
-
-                statusMessage.style.border =
-                    "1px solid #10b981";
-
-            }
-
-            else if (type === "warning") {
-
-                statusMessage.style.background =
-                    "#713f12";
-
-                statusMessage.style.color =
-                    "#fef08a";
-
-                statusMessage.style.border =
-                    "1px solid #f59e0b";
-
-            }
-
-            else if (type === "blocked") {
-
-                statusMessage.style.background =
-                    "#7f1d1d";
-
-                statusMessage.style.color =
-                    "#fca5a5";
-
-                statusMessage.style.border =
-                    "1px solid #ef4444";
-
-            }
-
-            else {
-
-                statusMessage.style.background =
-                    "#334155";
-
-                statusMessage.style.color =
-                    "#f8fafc";
-
-                statusMessage.style.border =
-                    "1px solid #64748b";
-            }
         }
 
 
-        loginForm.addEventListener(
-            "submit",
-            async function(event) {
-
-                // MOST IMPORTANT LINE
-                event.preventDefault();
+        const context =
+            new AudioContext();
 
 
-                const username =
-                    usernameInput.value.trim();
-
-                const password =
-                    passwordInput.value;
+        const oscillator =
+            context.createOscillator();
 
 
-                if (!username || !password) {
+        const gain =
+            context.createGain();
 
-                    showMessage(
-                        "Please enter username and password.",
-                        "warning"
-                    );
 
-                    return;
-                }
+        const time =
+            context.currentTime;
+
+
+        oscillator.type =
+            "sawtooth";
+
+
+        oscillator.frequency.setValueAtTime(
+            650,
+            time
+        );
+
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            950,
+            time + 0.18
+        );
+
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            600,
+            time + 0.36
+        );
+
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            time
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.18,
+            time + 0.03
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            time + 0.45
+        );
+
+
+        oscillator.connect(
+            gain
+        );
+
+
+        gain.connect(
+            context.destination
+        );
+
+
+        oscillator.start();
+
+
+        oscillator.stop(
+            time + 0.45
+        );
+
+
+        setTimeout(
+            function() {
+
+                context.close();
+
+            },
+            600
+        );
+
+
+    }
+
+    catch (
+        error
+    ) {
+
+        console.warn(
+            "Security siren unavailable:",
+            error
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// SHOW MESSAGE
+// ============================================================
+
+function showMessage(
+    message,
+    type
+) {
+
+    statusMessage.style.display =
+        "block";
+
+
+    statusMessage.textContent =
+        message;
+
+
+    if (
+        type ===
+        "success"
+    ) {
+
+        statusMessage.style.background =
+            "#064e3b";
+
+        statusMessage.style.color =
+            "#6ee7b7";
+
+        statusMessage.style.border =
+            "1px solid #10b981";
+
+    }
+
+    else if (
+        type ===
+        "warning"
+    ) {
+
+        statusMessage.style.background =
+            "#713f12";
+
+        statusMessage.style.color =
+            "#fef08a";
+
+        statusMessage.style.border =
+            "1px solid #f59e0b";
+
+    }
+
+    else if (
+        type ===
+        "blocked"
+    ) {
+
+        statusMessage.style.background =
+            "#7f1d1d";
+
+        statusMessage.style.color =
+            "#fca5a5";
+
+        statusMessage.style.border =
+            "1px solid #ef4444";
+
+    }
+
+    else {
+
+        statusMessage.style.background =
+            "#334155";
+
+        statusMessage.style.color =
+            "#f8fafc";
+
+        statusMessage.style.border =
+            "1px solid #64748b";
+
+    }
+
+}
+
+
+// ============================================================
+// CONTACT ADMINISTRATOR
+// ============================================================
+
+contactAdminButton.addEventListener(
+
+    "click",
+
+    function(event) {
+
+        event.preventDefault();
+
+
+        /*
+         * The recovery page is handled by HoneyShield
+         * itself instead of opening Gmail.
+         *
+         * The username is passed through the URL only
+         * so the recovery form can pre-fill it.
+         *
+         * No password is passed.
+         */
+
+        const username =
+            usernameInput.value.trim();
+
+
+        let recoveryURL =
+            "/recovery.html";
+
+
+        if (
+            username
+        ) {
+
+            recoveryURL +=
+                "?username=" +
+                encodeURIComponent(
+                    username
+                );
+
+        }
+
+
+        window.location.href =
+            recoveryURL;
+
+    }
+
+);
+
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+loginForm.addEventListener(
+
+    "submit",
+
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const username =
+            usernameInput.value.trim();
+
+
+        const password =
+            passwordInput.value;
+
+
+        if (
+            !username ||
+            !password
+        ) {
+
+            showMessage(
+                "Please enter username and password.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        loginButton.disabled =
+            true;
+
+
+        loginButton.textContent =
+            "Checking...";
+
+
+        try {
+
+
+            const response =
+                await fetch(
+
+                    "/api/auth/login",
+
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                username:
+                                    username,
+
+                                password:
+                                    password
+
+                            })
+
+                    }
+
+                );
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                "HoneyShield Response:",
+                result
+            );
+
+
+            // =================================================
+            // SUCCESSFUL LOGIN
+            // =================================================
+
+            if (
+                result.success === true &&
+                result.mode === "REAL"
+            ) {
+
+                updateAttemptCounter(
+                    0
+                );
+
+
+                showMessage(
+                    "✅ Login successful. Opening dashboard...",
+                    "success"
+                );
+
+
+                setTimeout(
+
+                    function() {
+
+                        window.location.href =
+                            "/dashboard";
+
+                    },
+
+                    500
+
+                );
+
+
+                return;
+
+            }
+
+
+            // =================================================
+            // IP BLOCKED
+            // =================================================
+
+            if (
+                result.blocked === true
+            ) {
+
+                updateAttemptCounter(
+                    MAX_ATTEMPTS
+                );
+
+
+                playSecuritySiren();
+
+
+                recoveryBox.style.display =
+                    "block";
+
+
+                showMessage(
+
+                    "🚨 Security Alert: 3 failed login attempts detected. Your IP has been blocked. Please contact the administrator for identity verification and access restoration.",
+
+                    "blocked"
+
+                );
 
 
                 loginButton.disabled =
                     true;
 
+
                 loginButton.textContent =
-                    "Checking...";
+                    "IP BLOCKED";
 
 
-                try {
-
-                    const response =
-                        await fetch(
-                            "/api/auth/login",
-                            {
-
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-
-                                body: JSON.stringify({
-                                    username:
-                                        username,
-
-                                    password:
-                                        password
-                                })
-                            }
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    console.log(
-                        "HoneyShield Response:",
-                        result
-                    );
-
-
-                    // =====================================
-                    // REAL USER
-                    // =====================================
-
-                    if (
-                        result.success === true &&
-                        result.mode === "REAL"
-                    ) {
-
-                        showMessage(
-                            "✅ Login successful. Opening dashboard...",
-                            "success"
-                        );
-
-
-                        setTimeout(
-                            function() {
-
-                                window.location.href =
-                                    "/dashboard";
-
-                            },
-                            500
-                        );
-
-
-                        return;
-                    }
-
-
-                    // =====================================
-                    // ATTACKER
-                    // =====================================
-
-                    if (
-                        result.mode === "DECOY"
-                    ) {
-
-                        showMessage(
-                            "🛡️ Threat detected. Redirecting to honeypot...",
-                            "blocked"
-                        );
-
-
-                        setTimeout(
-                            function() {
-
-                                window.location.href =
-                                    "/honeypot";
-
-                            },
-                            700
-                        );
-
-
-                        return;
-                    }
-
-
-                    // =====================================
-                    // PERMANENT IP BLOCK
-                    // =====================================
-                    if (result.blocked === true) {
-
-                        playSecuritySiren();
-
-                        showMessage('Security alert! Your IP has been permanently blocked.', 'blocked');
-
-                        return;
-                    }
-
-                    // =====================================
-                    // SUSPICIOUS
-                    // =====================================
-
-                    if (
-                        result.mode === "SUSPICIOUS"
-                    ) {
-
-                        showMessage(
-                            "⚠️ Suspicious login attempt. Attempts: " +
-                            result.attempts,
-                            "warning"
-                        );
-
-
-                        return;
-                    }
-
-
-                    // =====================================
-                    // WRONG PASSWORD
-                    // =====================================
-
-                    showMessage(
-                        result.message ||
-                        "❌ Invalid username or password.",
-                        "warning"
-                    );
-
-                }
-
-
-                catch (error) {
-
-                    console.error(
-                        "HoneyShield Login Error:",
-                        error
-                    );
-
-
-                    showMessage(
-                        "❌ Backend connection failed.",
-                        "error"
-                    );
-
-                }
-
-
-                finally {
-
-                    loginButton.disabled =
-                        false;
-
-                    loginButton.textContent =
-                        "Login to Dashboard";
-                }
+                return;
 
             }
-        );
 
-    </script>
+
+            // =================================================
+            // ATTEMPT 2 WARNING
+            // =================================================
+
+            if (
+                result.attempts === 2
+            ) {
+
+                updateAttemptCounter(
+                    2
+                );
+
+
+                showMessage(
+
+                    "⚠️ 2 attempts used. 1 attempt remaining. If the next login attempt fails, your IP will be blocked.",
+
+                    "warning"
+
+                );
+
+
+                return;
+
+            }
+
+
+            // =================================================
+            // ATTEMPT 1
+            // =================================================
+
+            if (
+                result.attempts === 1
+            ) {
+
+                updateAttemptCounter(
+                    1
+                );
+
+
+                showMessage(
+
+                    "⚠️ Invalid username or password. You used 1 attempt. 2 attempts remaining.",
+
+                    "warning"
+
+                );
+
+
+                return;
+
+            }
+
+
+            // =================================================
+            // FALLBACK
+            // =================================================
+
+            showMessage(
+
+                result.message ||
+                "❌ Invalid username or password.",
+
+                "warning"
+
+            );
+
+        }
+
+
+        catch (
+            error
+        ) {
+
+            console.error(
+                "HoneyShield Login Error:",
+                error
+            );
+
+
+            showMessage(
+
+                "❌ Backend connection failed.",
+
+                "error"
+
+            );
+
+        }
+
+
+        finally {
+
+
+            if (
+                currentAttempts <
+                MAX_ATTEMPTS
+            ) {
+
+                loginButton.disabled =
+                    false;
+
+
+                loginButton.textContent =
+                    "Login to Dashboard";
+
+            }
+
+        }
+
+    }
+
+);
+
+
+// ============================================================
+// INITIAL STATE
+// ============================================================
+
+updateAttemptCounter(
+    0
+);
+
+
+</script>
+
 
 </body>
 

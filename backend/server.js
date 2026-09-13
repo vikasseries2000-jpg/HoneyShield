@@ -3,7 +3,9 @@
 // SERVER.JS
 // ============================================================
 
-require("dotenv").config();
+require("dotenv").config({
+    path: __dirname + "/.env"
+});
 
 const express =
     require("express");
@@ -31,7 +33,8 @@ const path =
 const {
     login
 } =
-    require("./controllers/authController")
+    require("./controllers/authController");
+
 
 const {
     getLogs,
@@ -46,6 +49,22 @@ const {
     clearBlockedIPs
 } =
     require("./detectionService");
+
+
+// ============================================================
+// RECOVERY ROUTES
+// ============================================================
+
+const recoveryRoutes =
+    require("./routes/recoveryRoutes");
+
+
+// ============================================================
+// ADMIN RECOVERY ROUTES
+// ============================================================
+
+const adminRecoveryRoutes =
+    require("./routes/adminRecoveryRoutes");
 
 
 // ============================================================
@@ -213,6 +232,26 @@ app.get(
 app.post(
     "/api/auth/login",
     login
+);
+
+
+// ============================================================
+// RECOVERY API
+// ============================================================
+
+app.use(
+    "/api/recovery",
+    recoveryRoutes
+);
+
+
+// ============================================================
+// ADMIN RECOVERY API
+// ============================================================
+
+app.use(
+    "/api/admin",
+    adminRecoveryRoutes
 );
 
 
@@ -672,6 +711,10 @@ const server =
 
             console.log(
                 `🍯 Honeypot: http://localhost:${PORT}/honeypot.html`
+            );
+
+            console.log(
+                `🛡️ Recovery: http://localhost:${PORT}/recovery.html`
             );
 
             console.log(

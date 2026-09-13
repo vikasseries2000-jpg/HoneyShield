@@ -22,8 +22,15 @@ const {
 } = require("../services/loggerservices");
 
 
+const {
+
+    sendLoginAttemptAlert
+
+} = require("../services/notifierService");
+
+
 // ============================================================
-// DEMO ADMIN
+// DEMO USER
 // ============================================================
 
 const DEMO_USER = {
@@ -38,6 +45,13 @@ const DEMO_USER = {
 
 
 // ============================================================
+// MAX LOGIN ATTEMPTS
+// ============================================================
+
+const MAX_ATTEMPTS = 3;
+
+
+// ============================================================
 // GET CLIENT IP
 // ============================================================
 
@@ -49,7 +63,9 @@ function getClientIP(req) {
         ];
 
 
-    if (forwarded) {
+    if (
+        forwarded
+    ) {
 
         return normalizeIP(
             forwarded
@@ -67,6 +83,88 @@ function getClientIP(req) {
         "unknown"
 
     );
+
+}
+
+
+// ============================================================
+// GET USER EMAIL
+// ============================================================
+//
+// For this college/demo version the email belongs to the
+// configured demo user.
+//
+// IMPORTANT:
+// Do NOT accept email from the browser and blindly send
+// security alerts to it. In a real application the email
+// should come from the server-side user database.
+// ============================================================
+
+function getUserEmail(username) {
+
+    if (
+        username ===
+        DEMO_USER.username
+    ) {
+
+        return (
+            process.env.DEMO_USER_EMAIL ||
+            process.env.NOTIFY_EMAIL ||
+            ""
+        );
+
+    }
+
+
+    return (
+        process.env.NOTIFY_EMAIL ||
+        ""
+    );
+
+}
+
+
+// ============================================================
+// SEND LOGIN EMAIL SAFELY
+// ============================================================
+
+async function notifyLoginAttempt({
+
+    username,
+    ip,
+    attempts,
+    remaining,
+    status
+
+}) {
+
+    try {
+
+        await sendLoginAttemptAlert({
+
+            username,
+
+            ip,
+
+            attempt:
+                attempts,
+
+            remaining,
+
+            status
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Login email notification error:",
+            error.message
+        );
+
+    }
 
 }
 
@@ -99,10 +197,6 @@ async function login(
         // ====================================================
         // BLOCKED IP CHECK
         // ====================================================
-        // IMPORTANT:
-        // A blocked IP can NEVER login.
-        // It is NOT counted as a new attack.
-        // ====================================================
 
         if (
             isBlocked(ip)
@@ -123,7 +217,7 @@ async function login(
                     "BLOCKED",
 
                 attemptCount:
-                    3
+                    MAX_ATTEMPTS
 
             });
 
@@ -142,12 +236,18 @@ async function login(
                         true,
 
                     message:
-                        "Your IP has been permanently blocked due to suspicious activity.",
+                        "Your IP has been blocked after 3 failed login attempts. Please contact the administrator for account recovery.",
 
                     ip,
 
                     attempts:
-                        3
+                        MAX_ATTEMPTS,
+
+                    remaining:
+                        0,
+
+                    recovery:
+                        true
 
                 });
 
@@ -247,13 +347,35 @@ async function login(
             );
 
 
+        const attempts =
+            Number(
+                detection.attempts ||
+                0
+            );
+
+
+        const remaining =
+            Math.max(
+
+                0,
+
+                MAX_ATTEMPTS -
+                attempts
+
+            );
+
+
         // ====================================================
-        // THIRD ATTEMPT
+        // THIRD ATTEMPT — IP BLOCK
         // ====================================================
 
         if (
             detection.blocked
         ) {
+
+            // ------------------------------------------------
+            // SECURITY LOG
+            // ------------------------------------------------
 
             await addLog({
 
@@ -270,10 +392,14 @@ async function login(
                     "BLOCKED",
 
                 attemptCount:
-                    detection.attempts
+                    attempts
 
             });
 
+
+            // ------------------------------------------------
+            // DECOY LOG
+            // ------------------------------------------------
 
             await addLog({
 
@@ -290,10 +416,34 @@ async function login(
                     "REDIRECTED_TO_DECOY",
 
                 attemptCount:
-                    detection.attempts
+                    attempts
 
             });
 
+
+            // ------------------------------------------------
+            // EMAIL — ATTEMPT 3
+            // ------------------------------------------------
+
+            await notifyLoginAttempt({
+
+                username,
+
+                ip,
+
+                attempts,
+
+                remaining: 0,
+
+                status:
+                    "IP_BLOCKED"
+
+            });
+
+
+            // ------------------------------------------------
+            // RESPONSE
+            // ------------------------------------------------
 
             return res
                 .status(403)
@@ -309,12 +459,16 @@ async function login(
                         true,
 
                     message:
-                        "Your IP has been permanently blocked due to suspicious activity.",
+                        "3 failed login attempts detected. Your IP has been blocked. If you are the legitimate account owner, contact the administrator for verification and access restoration.",
 
                     ip,
 
-                    attempts:
-                        detection.attempts
+                    attempts,
+
+                    remaining: 0,
+
+                    recovery:
+                        true
 
                 });
 
@@ -324,6 +478,12 @@ async function login(
         // ====================================================
         // NORMAL FAILED ATTEMPT
         // ====================================================
+
+        const status =
+            detection.suspicious
+                ? "SUSPICIOUS"
+                : "FAILED";
+
 
         await addLog({
 
@@ -336,16 +496,72 @@ async function login(
 
             password,
 
-            status:
-                detection.suspicious
-                    ? "SUSPICIOUS"
-                    : "FAILED",
+            status,
 
             attemptCount:
-                detection.attempts
+                attempts
 
         });
 
+
+        // ====================================================
+        // EMAIL — ATTEMPT 1 / 2
+        // ====================================================
+
+        await notifyLoginAttempt({
+
+            username,
+
+            ip,
+
+            attempts,
+
+            remaining,
+
+            status
+
+        });
+
+
+        // ====================================================
+        // ATTEMPT 2 WARNING
+        // ====================================================
+
+        if (
+            attempts === 2
+        ) {
+
+            return res
+                .status(401)
+                .json({
+
+                    success:
+                        false,
+
+                    mode:
+                        "WARNING",
+
+                    blocked:
+                        false,
+
+                    message:
+                        "Invalid username or password. You have used 2 of 3 attempts. 1 attempt remaining. If the next login attempt fails, your IP will be blocked.",
+
+                    attempts: 2,
+
+                    remaining: 1,
+
+                    warning:
+                        "NEXT_FAILURE_WILL_BLOCK_IP"
+
+                });
+
+        }
+
+
+        // ====================================================
+        // ATTEMPT 1
+        // ====================================================
 
         return res
             .status(401)
@@ -359,21 +575,22 @@ async function login(
                         ? "SUSPICIOUS"
                         : "NORMAL",
 
+                blocked:
+                    false,
+
                 message:
-                    "Invalid username or password.",
+                    "Invalid username or password. You have used 1 of 3 attempts. 2 attempts remaining.",
 
-                attempts:
-                    detection.attempts,
+                attempts,
 
-                remaining:
-                    MAX_SAFE_REMAINING(
-                        detection.attempts
-                    )
+                remaining
 
             });
 
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "Login error:",
@@ -399,30 +616,13 @@ async function login(
 
 
 // ============================================================
-// REMAINING ATTEMPTS
-// ============================================================
-
-function MAX_SAFE_REMAINING(
-    attempts
-) {
-
-    return Math.max(
-        0,
-        3 -
-        Number(
-            attempts || 0
-        )
-    );
-
-}
-
-
-// ============================================================
 // EXPORT
 // ============================================================
 
 module.exports = {
 
-    login
+    login,
+
+    getUserEmail
 
 };

@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        HoneyShield - Account Recovery
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at top,
+                    #18233d 0%,
+                    #080d18 45%,
+                    #03060c 100%
+                );
+
+            color: #ffffff;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 25px;
+
+        }
+
+
+        .container {
+
+            width: 100%;
+
+            max-width: 650px;
+
+        }
+
+
+        .card {
+
+            background:
+                rgba(
+                    13,
+                    20,
+                    35,
+                    0.96
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.10
+                );
+
+            border-radius: 18px;
+
+            padding: 32px;
+
+            box-shadow:
+                0 25px 70px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.55
+                );
+
+        }
+
+
+        .brand {
+
+            text-align: center;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .logo {
+
+            width: 65px;
+
+            height: 65px;
+
+            margin:
+                0 auto 15px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 32px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00e5ff,
+                    #4169e1
+                );
+
+            box-shadow:
+                0 0 30px
+                rgba(
+                    0,
+                    229,
+                    255,
+                    0.35
+                );
+
+        }
+
+
+        h1 {
+
+            margin: 0;
+
+            font-size: 28px;
+
+        }
+
+
+        .subtitle {
+
+            color: #9ca9bd;
+
+            margin-top: 8px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .blocked {
+
+            margin:
+                20px 0;
+
+            padding: 16px;
+
+            border-radius: 12px;
+
+            background:
+                rgba(
+                    255,
+                    70,
+                    70,
+                    0.10
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    80,
+                    80,
+                    0.30
+                );
+
+            color: #ffb4b4;
+
+        }
+
+
+        .step {
+
+            margin-top: 25px;
+
+        }
+
+
+        .step-title {
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            margin-bottom: 15px;
+
+            color: #ffffff;
+
+        }
+
+
+        label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #cbd5e1;
+
+            font-size: 14px;
+
+        }
+
+
+        input,
+        select,
+        textarea {
+
+            width: 100%;
+
+            padding: 13px 14px;
+
+            margin-bottom: 17px;
+
+            border-radius: 9px;
+
+            border:
+                1px solid
+                #2d3a52;
+
+            background:
+                #080e19;
+
+            color: #ffffff;
+
+            outline: none;
+
+            font-size: 14px;
+
+        }
+
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+
+            border-color:
+                #00d9ff;
+
+            box-shadow:
+                0 0 0 2px
+                rgba(
+                    0,
+                    217,
+                    255,
+                    0.10
+                );
+
+        }
+
+
+        textarea {
+
+            min-height: 110px;
+
+            resize: vertical;
+
+        }
+
+
+        button {
+
+            width: 100%;
+
+            border: none;
+
+            border-radius: 9px;
+
+            padding: 14px;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s,
+                opacity 0.15s;
+
+        }
+
+
+        button:hover {
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        button:disabled {
+
+            opacity: 0.55;
+
+            cursor: not-allowed;
+
+            transform: none;
+
+        }
+
+
+        .primary {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00d9ff,
+                    #4169e1
+                );
+
+            color: #ffffff;
+
+        }
+
+
+        .secondary {
+
+            margin-top: 10px;
+
+            background:
+                #182338;
+
+            color: #dbeafe;
+
+            border:
+                1px solid
+                #2b3b56;
+
+        }
+
+
+        .verify {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00c853,
+                    #087f5b
+                );
+
+            color: white;
+
+        }
+
+
+        .hidden {
+
+            display: none !important;
+
+        }
+
+
+        .info {
+
+            padding: 13px;
+
+            border-radius: 9px;
+
+            margin-bottom: 15px;
+
+            background:
+                rgba(
+                    0,
+                    180,
+                    255,
+                    0.08
+                );
+
+            border:
+                1px solid
+                rgba(
+                    0,
+                    180,
+                    255,
+                    0.20
+                );
+
+            color: #b9eaff;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .warning {
+
+            padding: 13px;
+
+            border-radius: 9px;
+
+            margin-top: 5px;
+
+            margin-bottom: 15px;
+
+            background:
+                rgba(
+                    255,
+                    190,
+                    0,
+                    0.08
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    190,
+                    0,
+                    0.22
+                );
+
+            color: #ffe6a3;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .success {
+
+            padding: 18px;
+
+            border-radius: 12px;
+
+            background:
+                rgba(
+                    0,
+                    200,
+                    83,
+                    0.10
+                );
+
+            border:
+                1px solid
+                rgba(
+                    0,
+                    200,
+                    83,
+                    0.30
+                );
+
+            color: #b8ffd0;
+
+            line-height: 1.6;
+
+        }
+
+
+        .error {
+
+            padding: 14px;
+
+            border-radius: 10px;
+
+            margin-top: 15px;
+
+            background:
+                rgba(
+                    255,
+                    50,
+                    50,
+                    0.10
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    50,
+                    50,
+                    0.30
+                );
+
+            color: #ffb7b7;
+
+            line-height: 1.5;
+
+        }
+
+
+        .request-id {
+
+            margin:
+                15px 0;
+
+            padding: 15px;
+
+            background:
+                #070c15;
+
+            border:
+                1px dashed
+                #3d506d;
+
+            border-radius: 9px;
+
+            text-align: center;
+
+        }
+
+
+        .request-id strong {
+
+            display: block;
+
+            margin-top: 7px;
+
+            font-size: 20px;
+
+            letter-spacing: 1px;
+
+            color: #00e5ff;
+
+            word-break: break-all;
+
+        }
+
+
+        .otp-input {
+
+            text-align: center;
+
+            font-size: 25px;
+
+            letter-spacing: 8px;
+
+            font-weight: bold;
+
+        }
+
+
+        .small {
+
+            color: #8d9ab0;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+
+            margin-top: 10px;
+
+        }
+
+
+        .status {
+
+            margin-top: 15px;
+
+            font-size: 13px;
+
+            color: #9fb0c8;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+
+        <!-- ================================================= -->
+        <!-- BRAND -->
+        <!-- ================================================= -->
+
+        <div class="brand">
+
+            <div class="logo">
+                🛡️
+            </div>
+
+            <h1>
+                HoneyShield
+            </h1>
+
+            <div class="subtitle">
+                Secure Account Recovery
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- BLOCKED MESSAGE -->
+        <!-- ================================================= -->
+
+        <div class="blocked">
+
+            <strong>
+                ⚠️ Access Temporarily Blocked
+            </strong>
+
+            <br>
+
+            Your IP has been temporarily blocked
+            after multiple suspicious login attempts.
+
+            <br><br>
+
+            Identity verification is required
+            before an administrator can restore access.
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- STEP 1 -->
+        <!-- ================================================= -->
+
+        <div
+            id="requestStep"
+            class="step"
+        >
+
+            <div class="step-title">
+                1. Submit Recovery Request
+            </div>
+
+
+            <div class="info">
+
+                Your username and registered email
+                must match HoneyShield's account records.
+
+                An attacker cannot complete recovery
+                using an unrelated email address.
+
+            </div>
+
+
+            <form id="recoveryForm">
+
+
+                <label for="username">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    autocomplete="username"
+                    required
+                >
+
+
+                <label for="contactEmail">
+                    Registered Email
+                </label>
+
+                <input
+                    type="email"
+                    id="contactEmail"
+                    name="contact_email"
+                    placeholder="Enter your registered email"
+                    autocomplete="email"
+                    required
+                >
+
+
+                <label for="reason">
+                    Recovery Reason
+                </label>
+
+                <select
+                    id="reason"
+                    name="reason"
+                    required
+                >
+
+                    <option value="">
+                        Select a reason
+                    </option>
+
+                    <option value="I am the legitimate account owner">
+                        I am the legitimate account owner
+                    </option>
+
+                    <option value="I had a login/password issue">
+                        I had a login/password issue
+                    </option>
+
+                    <option value="My login attempt was incorrectly detected">
+                        My login attempt was incorrectly detected
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <label for="verificationDetails">
+                    Additional Verification Details
+                </label>
+
+                <textarea
+                    id="verificationDetails"
+                    name="verification_details"
+                    placeholder="Provide information that can help the administrator verify your identity..."
+                ></textarea>
+
+
+                <div class="warning">
+
+                    🔐 <strong>Security Notice:</strong>
+
+                    Never enter your password,
+                    OTP, bank details, card details,
+                    or other secrets in this form.
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="primary"
+                    id="submitRequestButton"
+                >
+                    Send Verification Code
+                </button>
+
+
+                <button
+                    type="button"
+                    class="secondary"
+                    id="backButton"
+                >
+                    Back to Login
+                </button>
+
+
+            </form>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- STEP 2 -->
+        <!-- ================================================= -->
+
+        <div
+            id="otpStep"
+            class="step hidden"
+        >
+
+            <div class="step-title">
+                2. Verify Your Identity
+            </div>
+
+
+            <div class="info">
+
+                A 6-digit verification code has been
+                sent to your registered email:
+
+                <br><br>
+
+                <strong id="maskedEmail">
+                    ****
+                </strong>
+
+            </div>
+
+
+            <label for="otp">
+                Verification Code
+            </label>
+
+            <input
+                type="text"
+                id="otp"
+                class="otp-input"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+            >
+
+
+            <button
+                type="button"
+                class="verify"
+                id="verifyOtpButton"
+            >
+                Verify Code
+            </button>
+
+
+            <button
+                type="button"
+                class="secondary"
+                id="backToRequestButton"
+            >
+                Back
+            </button>
+
+
+            <div class="small">
+
+                The verification code expires in
+                approximately 5 minutes and has a limited
+                number of attempts.
+
+                <br><br>
+
+                Never share this code with an administrator
+                or anyone else.
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- STEP 3 -->
+        <!-- ================================================= -->
+
+        <div
+            id="waitingStep"
+            class="step hidden"
+        >
+
+            <div class="step-title">
+                3. Administrator Review
+            </div>
+
+
+            <div class="success">
+
+                <strong>
+                    ✅ Identity Verification Successful
+                </strong>
+
+                <br><br>
+
+                Your registered email was successfully
+                verified.
+
+                <br><br>
+
+                Your recovery request has now been sent
+                for administrator review.
+
+            </div>
+
+
+            <div class="request-id">
+
+                Recovery Request ID
+
+                <strong id="requestIdDisplay">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="info">
+
+                The administrator will review your request
+                and decide whether access should be restored.
+
+                <br><br>
+
+                <strong>
+                    Verification does not automatically unblock
+                    your IP.
+                </strong>
+
+            </div>
+
+
+            <div
+                class="status"
+                id="requestStatus"
+            >
+                Status: VERIFIED
+            </div>
+
+
+            <button
+                type="button"
+                class="secondary"
+                id="backLoginAfterVerification"
+            >
+                Return to Login
+            </button>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- MESSAGE -->
+        <!-- ================================================= -->
+
+        <div
+            id="messageBox"
+            class="hidden"
+        ></div>
+
+
+    </div>
+
+</div>
+
+
+<script>
+
+"use strict";
+
+
+// ============================================================
+// ELEMENTS
+// ============================================================
+
+const recoveryForm =
+    document.getElementById(
+        "recoveryForm"
+    );
+
+const usernameInput =
+    document.getElementById(
+        "username"
+    );
+
+const contactEmailInput =
+    document.getElementById(
+        "contactEmail"
+    );
+
+const reasonInput =
+    document.getElementById(
+        "reason"
+    );
+
+const verificationDetailsInput =
+    document.getElementById(
+        "verificationDetails"
+    );
+
+const submitRequestButton =
+    document.getElementById(
+        "submitRequestButton"
+    );
+
+const otpInput =
+    document.getElementById(
+        "otp"
+    );
+
+const verifyOtpButton =
+    document.getElementById(
+        "verifyOtpButton"
+    );
+
+const requestStep =
+    document.getElementById(
+        "requestStep"
+    );
+
+const otpStep =
+    document.getElementById(
+        "otpStep"
+    );
+
+const waitingStep =
+    document.getElementById(
+        "waitingStep"
+    );
+
+const maskedEmail =
+    document.getElementById(
+        "maskedEmail"
+    );
+
+const requestIdDisplay =
+    document.getElementById(
+        "requestIdDisplay"
+    );
+
+const requestStatus =
+    document.getElementById(
+        "requestStatus"
+    );
+
+const messageBox =
+    document.getElementById(
+        "messageBox"
+    );
+
+const backButton =
+    document.getElementById(
+        "backButton"
+    );
+
+const backToRequestButton =
+    document.getElementById(
+        "backToRequestButton"
+    );
+
+const backLoginAfterVerification =
+    document.getElementById(
+        "backLoginAfterVerification"
+    );
+
+
+// ============================================================
+// STATE
+// ============================================================
+
+let recoveryRequestId =
+    null;
+
+
+// ============================================================
+// URL USERNAME
+// ============================================================
+
+const urlParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const usernameFromURL =
+    urlParams.get(
+        "username"
+    );
+
+
+if (
+    usernameFromURL
+) {
+
+    usernameInput.value =
+        usernameFromURL;
+
+}
+
+
+// ============================================================
+// MESSAGE HELPERS
+// ============================================================
+
+function showError(
+    message
+) {
+
+    messageBox.className =
+        "error";
+
+    messageBox.textContent =
+        message;
+
+}
+
+
+function clearMessage() {
+
+    messageBox.className =
+        "hidden";
+
+    messageBox.textContent =
+        "";
+
+}
+
+
+// ============================================================
+// REQUEST RECOVERY
+// ============================================================
+
+recoveryForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        clearMessage();
+
+
+        const username =
+            usernameInput
+                .value
+                .trim();
+
+        const contactEmail =
+            contactEmailInput
+                .value
+                .trim();
+
+        const reason =
+            reasonInput
+                .value
+                .trim();
+
+        const verificationDetails =
+            verificationDetailsInput
+                .value
+                .trim();
+
+
+        if (
+            !username ||
+            !contactEmail ||
+            !reason
+        ) {
+
+            showError(
+                "Please complete all required fields."
+            );
+
+            return;
+
+        }
+
+
+        submitRequestButton.disabled =
+            true;
+
+        submitRequestButton.textContent =
+            "Sending Verification Code...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/recovery/request",
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                username:
+                                    username,
+
+                                contact_email:
+                                    contactEmail,
+
+                                reason:
+                                    reason,
+
+                                verification_details:
+                                    verificationDetails
+
+                            })
+
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "Unable to create recovery request."
+                );
+
+            }
+
+
+            // ----------------------------------------------
+            // STORE REQUEST ID
+            // ----------------------------------------------
+
+            recoveryRequestId =
+                result.request_id;
+
+
+            // ----------------------------------------------
+            // SHOW MASKED EMAIL
+            // ----------------------------------------------
+
+            maskedEmail.textContent =
+                result.masked_email ||
+                "your registered email";
+
+
+            // ----------------------------------------------
+            // SWITCH TO OTP
+            // ----------------------------------------------
+
+            requestStep.classList.add(
+                "hidden"
+            );
+
+            otpStep.classList.remove(
+                "hidden"
+            );
+
+
+            otpInput.value =
+                "";
+
+            otpInput.focus();
+
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                "Recovery request error:",
+                error
+            );
+
+            showError(
+                error.message ||
+                "Unable to submit recovery request."
+            );
+
+        } finally {
+
+            submitRequestButton.disabled =
+                false;
+
+            submitRequestButton.textContent =
+                "Send Verification Code";
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// OTP INPUT
+// ============================================================
+
+otpInput.addEventListener(
+    "input",
+    function() {
+
+        this.value =
+            this.value
+                .replace(
+                    /\D/g,
+                    ""
+                )
+                .slice(
+                    0,
+                    6
+                );
+
+    }
+);
+
+
+// ============================================================
+// VERIFY OTP
+// ============================================================
+
+verifyOtpButton.addEventListener(
+    "click",
+    async function() {
+
+        clearMessage();
+
+
+        const otp =
+            otpInput
+                .value
+                .trim();
+
+
+        if (
+            !recoveryRequestId
+        ) {
+
+            showError(
+                "Recovery request is missing. Please start again."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !/^\d{6}$/.test(
+                otp
+            )
+        ) {
+
+            showError(
+                "Please enter the 6-digit verification code."
+            );
+
+            return;
+
+        }
+
+
+        verifyOtpButton.disabled =
+            true;
+
+        verifyOtpButton.textContent =
+            "Verifying...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/recovery/verify-otp",
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                request_id:
+                                    recoveryRequestId,
+
+                                otp:
+                                    otp
+
+                            })
+
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "OTP verification failed."
+                );
+
+            }
+
+
+            // ----------------------------------------------
+            // VERIFIED
+            // ----------------------------------------------
+
+            requestIdDisplay.textContent =
+                recoveryRequestId;
+
+
+            requestStatus.textContent =
+                "Status: VERIFIED — Waiting for administrator review";
+
+
+            otpStep.classList.add(
+                "hidden"
+            );
+
+            waitingStep.classList.remove(
+                "hidden"
+            );
+
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                "OTP verification error:",
+                error
+            );
+
+            showError(
+                error.message ||
+                "Unable to verify the code."
+            );
+
+        } finally {
+
+            verifyOtpButton.disabled =
+                false;
+
+            verifyOtpButton.textContent =
+                "Verify Code";
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// BACK TO REQUEST
+// ============================================================
+
+backToRequestButton.addEventListener(
+    "click",
+    function() {
+
+        clearMessage();
+
+        otpStep.classList.add(
+            "hidden"
+        );
+
+        requestStep.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+// ============================================================
+// BACK TO LOGIN
+// ============================================================
+
+function goToLogin() {
+
+    window.location.href =
+        "/login.html";
+
+}
+
+
+backButton.addEventListener(
+    "click",
+    goToLogin
+);
+
+
+backLoginAfterVerification.addEventListener(
+    "click",
+    goToLogin
+);
+
+</script>
+
+
+</body>
+
+</html>
